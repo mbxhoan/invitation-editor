@@ -1,0 +1,8 @@
+# Runtime store — contains guest records AND the API credentials admins enter.
+# Never commit this.
+data.json
+data.json.tmp
+
+node_modules/
+.DS_Store
+.env

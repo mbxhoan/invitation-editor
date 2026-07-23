@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Playfair+Display:ital,wght@0,600;0,700;0,800;1,600&family=Montserrat:wght@400;500;600;700;800&family=Cormorant+Garamond:ital,wght@0,600;1,600&display=swap&subset=vietnamese" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+<script src="/shared.js"></script>
 <style>
 :root{
   --bg:#f4f2ee; --panel:#fff; --ink:#201d29; --mut:#766f80; --faint:#a39cae;
@@ -25,18 +26,22 @@ a:hover{color:var(--pri-d);text-decoration:underline}
 .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;box-sizing:border-box}
 .eyebrow{font-size:11px;font-weight:700;letter-spacing:.22em;color:var(--pri)}
 .lbl{font-size:11px;font-weight:700;letter-spacing:.14em;color:var(--mut)}
+.lbl.plain{letter-spacing:0;font-size:11.5px}
 .field{display:flex;flex-direction:column;gap:8px}
 .muted{color:var(--mut)}
+.stack{display:flex;flex-direction:column}
 
 .inp{width:100%;box-sizing:border-box;padding:12px 14px;border-radius:10px;border:1px solid var(--line2);
      background:var(--panel);color:var(--ink);font:500 15px 'Be Vietnam Pro',sans-serif;outline:none}
 .inp:focus{border-color:var(--pri);box-shadow:0 0 0 3px rgba(91,61,245,.15)}
 .inp.sm{padding:8px 10px;font-size:13px;border-radius:8px}
 .inp.xs{padding:7px 10px;font-size:12px;border-radius:7px;font-weight:500}
+textarea.inp{font:500 12.5px/1.55 ui-monospace,Menlo,monospace;resize:vertical}
 
 .btn{border-radius:10px;border:1px solid var(--line2);background:var(--panel);color:var(--ink);
      padding:12px 18px;font:600 14px 'Be Vietnam Pro',sans-serif;cursor:pointer}
 .btn:hover{background:var(--bg)}
+.btn:disabled{opacity:.55;cursor:default}
 .btn.pri{border:none;background:var(--pri);color:#fff}
 .btn.pri:hover{background:var(--pri-d)}
 .btn.dark{border:none;background:var(--ink);color:#fff}
@@ -51,7 +56,11 @@ a:hover{color:var(--pri-d);text-decoration:underline}
 
 .err{background:rgba(192,57,43,.08);border:1px solid rgba(192,57,43,.25);color:var(--danger);
      border-radius:10px;padding:10px 14px;font-size:13.5px}
+.ok{background:rgba(30,122,70,.08);border:1px solid rgba(30,122,70,.25);color:#1e7a46;
+    border-radius:10px;padding:10px 14px;font-size:13.5px}
 .note{font-size:13px;background:var(--bg);border-radius:8px;padding:10px 14px}
+.warn{font-size:12.5px;line-height:1.55;background:rgba(240,162,60,.12);border:1px solid rgba(232,139,26,.35);
+      border-radius:10px;padding:10px 14px;color:#7a4a06}
 .json{margin:0;font-size:11.5px;line-height:1.55;white-space:pre-wrap;word-break:break-all;
       background:#f7f6f3;border-radius:10px;padding:14px}
 
@@ -75,15 +84,16 @@ a:hover{color:var(--pri-d);text-decoration:underline}
 .row{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 18px;display:flex;
      gap:14px;align-items:center;cursor:pointer;flex-wrap:wrap}
 .row:hover{border-color:var(--pri)}
-.stack{display:flex;flex-direction:column}
 h2.sec{margin:0;font:700 20px 'Be Vietnam Pro',sans-serif}
 h3.sec{margin:0;font:700 15px 'Be Vietnam Pro',sans-serif}
 .sub{margin:4px 0 0;font-size:13px;color:var(--mut)}
 .head{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;gap:12px;flex-wrap:wrap}
-.logmark{font:12.5px ui-monospace,Menlo,monospace;background:var(--panel);border:1px solid rgba(32,29,41,.08);
-         border-radius:8px;padding:9px 14px}
-.chk{display:flex;gap:4px;align-items:center;cursor:pointer}
+.logmark{font:12.5px/1.5 ui-monospace,Menlo,monospace;background:var(--panel);border:1px solid rgba(32,29,41,.08);
+         border-radius:8px;padding:9px 14px;word-break:break-all}
+.chk{display:flex;gap:6px;align-items:center;cursor:pointer;font-size:12.5px}
 .keytag{font:11px ui-monospace,monospace;background:var(--bg);padding:2px 7px;border-radius:5px}
+.tok{font:11px ui-monospace,monospace;background:#f0edff;color:#4930cc;padding:2px 6px;border-radius:5px;
+     display:inline-block;margin:2px 3px 0 0}
 
 /* --- guest form: fit the viewport on desktop, never scroll the page --- */
 .home{display:flex;flex-direction:column;align-items:center;padding:52px 20px 32px}
@@ -93,9 +103,9 @@ h3.sec{margin:0;font:700 15px 'Be Vietnam Pro',sans-serif}
 .rule{width:120px;height:1px;background:linear-gradient(90deg,transparent,#c9b8f5,transparent);margin:14px 0 6px}
 .formwrap{width:100%;max-width:560px;padding:28px;margin-top:18px;min-height:0;overflow:auto}
 .form-grid{display:flex;flex-direction:column;gap:18px}
-.foot{margin-top:auto;padding-top:36px;font-size:13px}
+.foot{margin-top:auto;padding-top:36px;font-size:13px;display:flex;gap:18px}
 
-/* --- finished card: preview beside the edit panel --- */
+/* --- finished card / lookup: preview beside the side panel --- */
 .cardscreen{display:flex;flex-direction:column;align-items:center;padding:28px 16px}
 .cardlayout{width:100%;max-width:1120px;display:flex;gap:22px;align-items:flex-start;justify-content:center;flex-wrap:wrap}
 .cardpane{flex:1 1 380px;max-width:620px;min-width:0;display:flex;flex-direction:column;gap:14px}
@@ -127,28 +137,12 @@ h3.sec{margin:0;font:700 15px 'Be Vietnam Pro',sans-serif}
 <script>
 'use strict';
 
-/* ---------- config (was the prototype's editable props) ---------- */
-const ADMIN_PASSWORD = 'admin';
-const SHOW_JSON_ON_CARD = false;
-
 /* ---------- utils ---------- */
 const $ = (sel) => document.querySelector(sel);
-const uid = () => Math.random().toString(36).slice(2, 10);
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) =>
   ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const uid = () => Math.random().toString(36).slice(2, 10);
 
-function hash(s) {
-  let h = 0;
-  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0;
-  return Math.abs(h);
-}
-function load(k) {
-  try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : null; } catch (e) { return null; }
-}
-function save(k, v) {
-  try { localStorage.setItem(k, JSON.stringify(v)); return true; }
-  catch (e) { alert('Không lưu được (bộ nhớ trình duyệt đầy). Thử dùng ảnh nền nhỏ hơn.'); return false; }
-}
 function downloadHref(name, href) {
   const a = document.createElement('a');
   a.download = name; a.href = href; a.click();
@@ -156,49 +150,37 @@ function downloadHref(name, href) {
 const downloadJson = (name, obj) =>
   downloadHref(name, 'data:application/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(obj, null, 2)));
 
-/* ---------- seed data ---------- */
-function defaultInputs() {
-  return [
-    { key: 'title', label: 'Danh xưng', type: 'select', options: ['Ông', 'Bà'], required: true, placeholder: '' },
-    { key: 'name', label: 'Họ và tên', type: 'text', placeholder: 'VD: NGUYỄN VĂN A', required: true },
-    { key: 'phone', label: 'Số ĐIỆN THOẠI', type: 'text', placeholder: 'VD: ', required: true },
-    { key: 'position', label: 'Chức danh', type: 'text', placeholder: 'VD: GIÁM ĐỐC KINH DOANH', required: false },
-    { key: 'company', label: 'Tên công ty / Đại lý', type: 'text', placeholder: 'VD: NAM VIỆT GROUP', required: false }
-  ];
-}
-function seedEvents() {
-  const mk = (name, theme, title, date, venue) => ({
-    id: uid(), name, w: 1080, h: 1350, bg: null, theme,
-    inputs: defaultInputs(),
-    fields: [
-      { id: uid(), type: 'static', text: 'TRÂN TRỌNG KÍNH MỜI', x: 540, y: 200, size: 28, font: 'Montserrat', weight: '600', color: theme.gold, align: 'center', upper: false, ls: 8, maxW: 0 },
-      { id: uid(), type: 'bind', bind: 'fullNameDisplay', prefix: '', x: 540, y: 285, size: 58, font: 'Playfair Display', weight: '700', color: '#ffffff', align: 'center', upper: true, ls: 1, maxW: 940 },
-      { id: uid(), type: 'bind', bind: 'position', prefix: '', x: 540, y: 345, size: 26, font: 'Montserrat', weight: '600', color: theme.gold, align: 'center', upper: true, ls: 3, maxW: 900 },
-      { id: uid(), type: 'bind', bind: 'company', prefix: '', x: 540, y: 398, size: 29, font: 'Montserrat', weight: '500', color: theme.soft, align: 'center', upper: true, ls: 1, maxW: 960 },
-      { id: uid(), type: 'static', text: 'tới tham dự sự kiện', x: 540, y: 465, size: 26, font: 'Cormorant Garamond', weight: '600', color: theme.soft, align: 'center', upper: false, ls: 2, maxW: 0 },
-      { id: uid(), type: 'static', text: title, x: 540, y: 575, size: 50, font: 'Playfair Display', weight: '800', color: theme.gold, align: 'center', upper: true, ls: 1, maxW: 980 },
-      { id: uid(), type: 'static', text: date, x: 540, y: 655, size: 30, font: 'Montserrat', weight: '700', color: '#ffffff', align: 'center', upper: false, ls: 1, maxW: 0 },
-      { id: uid(), type: 'static', text: venue, x: 540, y: 703, size: 24, font: 'Montserrat', weight: '500', color: theme.soft, align: 'center', upper: false, ls: 1, maxW: 960 },
-      { id: uid(), type: 'static', text: 'Rất hân hạnh được đón tiếp!', x: 540, y: 905, size: 30, font: 'Cormorant Garamond', weight: '600', color: theme.gold, align: 'center', upper: false, ls: 0, maxW: 0 },
-      { id: uid(), type: 'bind', bind: 'lucky', prefix: 'Lucky Number: ', x: 540, y: 960, size: 33, font: 'Montserrat', weight: '700', color: '#ffffff', align: 'center', upper: false, ls: 1, maxW: 0 },
-      { id: uid(), type: 'qr', x: 540, y: 1010, size: 230 },
-      { id: uid(), type: 'static', text: 'MÃ QR ĐỂ CHECK-IN', x: 540, y: 1295, size: 20, font: 'Montserrat', weight: '600', color: theme.soft, align: 'center', upper: false, ls: 4, maxW: 0 }
-    ]
-  });
-  const evs = [
-    mk('SỰ KIỆN KICK-OFF DỰ ÁN THÁP VÀNG RIVERSIDE', { c1: '#2b1657', c2: '#120a2e', glow: 'rgba(147,88,255,.45)', gold: '#e9c88f', soft: '#d9cff0' }, 'KHAI MỞ TỌA ĐỘ TƯƠNG LAI', '30.07.2026  |  08:00 - Thứ Năm', 'TẦNG 5 – GEM CENTER, TP. HỒ CHÍ MINH'),
-    mk('GALA DINNER TRI ÂN ĐỐI TÁC 2026', { c1: '#0e2148', c2: '#050b18', glow: 'rgba(64,120,255,.35)', gold: '#f0d9a0', soft: '#c6d4f2' }, 'ĐÊM TRI ÂN – KẾT NỐI THỊNH VƯỢNG', '12.09.2026  |  18:00 - Thứ Bảy', 'BALLROOM A – REX HOTEL, TP. HỒ CHÍ MINH'),
-    mk('LỄ RA MẮT SẢN PHẨM AURORA', { c1: '#0b3d35', c2: '#02120f', glow: 'rgba(45,212,168,.32)', gold: '#e8dcb8', soft: '#bfe3d6' }, 'AURORA – BỪNG SÁNG KỶ NGUYÊN MỚI', '05.10.2026  |  09:00 - Thứ Hai', 'TRUNG TÂM HỘI NGHỊ QUỐC GIA, HÀ NỘI')
-  ];
-  save('ecard.events', evs);
-  return evs;
-}
+/* ---------- server API ---------- */
+let token = sessionStorage.getItem('ecard.token') || '';
+const setToken = (t) => {
+  token = t || '';
+  t ? sessionStorage.setItem('ecard.token', t) : sessionStorage.removeItem('ecard.token');
+};
 
-const DEFAULT_THEME = { c1: '#2b1657', c2: '#120a2e', glow: 'rgba(147,88,255,.45)', gold: '#e9c88f', soft: '#d9cff0' };
-const FONTS = ['Playfair Display', 'Montserrat', 'Cormorant Garamond', 'Be Vietnam Pro'];
-const WEIGHTS = ['400', '500', '600', '700', '800'];
+async function api(path, { method = 'GET', body } = {}) {
+  const res = await fetch(path, {
+    method,
+    headers: {
+      ...(body ? { 'Content-Type': 'application/json' } : {}),
+      ...(token ? { Authorization: 'Bearer ' + token } : {})
+    },
+    body: body ? JSON.stringify(body) : undefined
+  });
+  let json = {};
+  try { json = await res.json(); } catch (e) { /* empty body */ }
+  if (!res.ok) {
+    const err = new Error(json.error || ('Lỗi máy chủ (HTTP ' + res.status + ')'));
+    err.status = res.status;
+    throw err;
+  }
+  return json;
+}
 
 /* ---------- canvas rendering ---------- */
+const FONTS = ['Playfair Display', 'Montserrat', 'Cormorant Garamond', 'Be Vietnam Pro'];
+const WEIGHTS = ['400', '500', '600', '700', '800'];
+const DEFAULT_THEME = { c1: '#2b1657', c2: '#120a2e', glow: 'rgba(147,88,255,.45)', gold: '#e9c88f', soft: '#d9cff0' };
+
 const IMGS = {};
 function getImg(src) {
   let e = IMGS[src];
@@ -280,15 +262,15 @@ function drawQr(ctx, f, content) {
       return;
     } catch (e) {}
   }
-  // fallback pattern when the QR lib failed to load — decorative only
-  const n = 25, cell = size / n, seed = hash(content);
+  // decorative fallback only — a real scannable QR needs the library
+  const n = 25, cell = size / n, seed = Shared.hash(content);
   for (let ri = 0; ri < n; ri++) for (let ci = 0; ci < n; ci++) {
     const inFinder = (ri < 7 && ci < 7) || (ri < 7 && ci >= n - 7) || (ri >= n - 7 && ci < 7);
     if (inFinder) {
       const rr = Math.min(ri, 6), cc = ci >= n - 7 ? ci - (n - 7) : Math.min(ci, 6);
       if (rr === 0 || rr === 6 || cc === 0 || cc === 6 || (rr >= 2 && rr <= 4 && cc >= 2 && cc <= 4))
         ctx.fillRect(x + ci * cell, y + ri * cell, Math.ceil(cell), Math.ceil(cell));
-    } else if ((hash(seed + '-' + ri + '-' + ci) % 100) < 46) {
+    } else if ((Shared.hash(seed + '-' + ri + '-' + ci) % 100) < 46) {
       ctx.fillRect(x + ci * cell, y + ri * cell, Math.ceil(cell), Math.ceil(cell));
     }
   }
@@ -303,49 +285,20 @@ function drawCard(canvas, ev, payload) {
   }
 }
 
-/* ---------- payloads ---------- */
-function buildPayload(ev, data) {
-  const name = data.name || '', title = data.title || '';
-  const lucky = 1000 + hash((name + '|' + (data.phone || '')).toLowerCase()) % 9000;
-  return {
-    id: uid(), eventId: ev.id, eventName: ev.name, createdAt: new Date().toISOString(), data,
-    computed: {
-      fullNameDisplay: ((title ? title + ' ' : '') + name).toUpperCase().trim(),
-      lucky: String(lucky),
-      qrContent: 'CHECKIN|' + ev.id + '|' + name + '|' + (data.phone || '') + '|' + lucky
-    },
-    source: 'event-card-app'
-  };
-}
-function samplePayload(ev) {
-  const data = {};
-  for (const i of ev.inputs)
-    data[i.key] = i.type === 'select'
-      ? (i.options && i.options[0]) || ''
-      : (i.placeholder || i.label).replace(/^VD:\s*/i, '');
-  return buildPayload(ev, data);
-}
-
 /* ---------- state ---------- */
-const events0 = load('ecard.events') || seedEvents();
 const S = {
-  view: 'home',
-  events: events0,
-  guests: load('ecard.guests') || [],
-  webhook: load('ecard.webhook') || { url: '', logs: [] },
-  selEventId: events0[0] ? events0[0].id : '',
-  formValues: {}, formErr: '',
+  view: 'home', booted: false, bootErr: '', busy: false,
+  events: [], guests: [], logs: [],
+  selEventId: '', formValues: {}, formErr: '',
   dupe: null, card: null, cardEdit: {}, cardMsg: '', cardErr: false, copyLabel: 'Copy JSON',
-  loginVal: '', loginErr: false, authed: false,
-  adminTab: 'events',
-  viewGuest: null, resendMsg: '', webhookMsg: '', webhookDraft: null,
-  editor: null
+  lookupEventId: '', lookupName: '', lookupPhone: '', lookupErr: '', lookupResult: null,
+  loginVal: '', loginErr: '', authed: false,
+  adminTab: 'events', viewGuest: null,
+  editor: null, apiTest: null
 };
 const curEvent = () => S.events.find((e) => e.id === S.selEventId);
 
-/* ---------- handler registry + event delegation ----------
-   Templates embed a handler id (data-click / data-change / data-file / data-down);
-   the table is rebuilt each render so handlers never outlive their markup. */
+/* ---------- handler registry + event delegation ---------- */
 let handlers = {}, hSeq = 0;
 function on(fn) { const k = 'h' + (++hSeq); handlers[k] = fn; return k; }
 const fire = (attr) => (e) => {
@@ -356,16 +309,19 @@ const fire = (attr) => (e) => {
   if (fn) fn(e, t);
 };
 
+/* ---------- routing ---------- */
+const PATH_OF = { home: '/', lookup: '/tra-cuu', login: '/admin', admin: '/admin' };
+const viewForPath = (p) =>
+  p === '/tra-cuu' ? 'lookup' : p === '/admin' ? (S.authed ? 'admin' : 'login') : 'home';
+
 /* ---------- render ---------- */
 // Entrance animations replay on every innerHTML rebuild, which reads as flicker.
-// Only animate when a render actually presents something new; otherwise hold
-// the scroll position so an in-place update is invisible.
+// Only animate when a render presents something new; otherwise hold the scroll.
 let animate = true;
 const fade = () => (animate ? ' fade' : '');
 
 function render() {
   const app = $('#app');
-  // preserve caret across the full re-render; inputs carry a stable data-k
   const ae = document.activeElement;
   const k = ae && ae.dataset ? ae.dataset.k : null;
   let selStart = null, selEnd = null;
@@ -387,7 +343,12 @@ function render() {
   paint();
 }
 function viewFor(v) {
+  if (!S.booted) {
+    return `<div class="screen" style="display:flex;align-items:center;justify-content:center;padding:20px">
+      <div class="${S.bootErr ? 'err' : 'muted'}">${esc(S.bootErr || 'Đang tải…')}</div></div>`;
+  }
   if (v === 'card') return cardView();
+  if (v === 'lookup') return lookupView();
   if (v === 'login') return loginView();
   if (v === 'admin') return adminView();
   if (v === 'editor') return editorView();
@@ -398,9 +359,13 @@ function paint() {
     const c = $('#cardCanvas'), ev = S.events.find((e) => e.id === S.card.eventId);
     if (c && ev) drawCard(c, ev, S.card.payload);
   }
+  if (S.view === 'lookup' && S.lookupResult) {
+    const c = $('#lookupCanvas'), ev = S.events.find((e) => e.id === S.lookupResult.eventId);
+    if (c && ev) drawCard(c, ev, S.lookupResult);
+  }
   if (S.view === 'editor' && S.editor) {
-    // placements are positioned from the wrapper's real width, which is only
-    // measurable after the markup lands — re-render once when it changes
+    // placements are positioned from the wrapper's real width, only measurable
+    // after the markup lands — re-render once when it changes
     const wrap = $('#edWrap');
     if (wrap && wrap.clientWidth && wrap.clientWidth !== S._edW) {
       S._edW = wrap.clientWidth;
@@ -415,11 +380,19 @@ function paint() {
     }
   }
 }
-const go = (view, patch) => {
+function go(view, patch) {
   animate = S.view !== view;
   Object.assign(S, patch || {}, { view });
+  const p = PATH_OF[view];
+  if (p && location.pathname !== p) history.pushState({}, '', p);
   render();
-};
+}
+addEventListener('popstate', () => {
+  const v = viewForPath(location.pathname);
+  animate = S.view !== v;
+  S.view = v;
+  render();
+});
 
 /* ---------- shared: one input block per declared event field ---------- */
 function fieldBlock(i, value, kPrefix, onChange, cls) {
@@ -441,8 +414,7 @@ function homeView() {
   const n = ev ? ev.inputs.length : 0;
   const fields = ev ? ev.inputs.map((i, idx) => fieldBlock(
     i, S.formValues[i.key] || '', 'f',
-    // typing must not re-render — that is what made the page flicker.
-    // Only the error banner appearing/disappearing changes the layout.
+    // typing must not re-render — that is what made the page flicker
     (e) => { S.formValues[i.key] = e.target.value; if (S.formErr) { S.formErr = ''; render(); } },
     idx === n - 1 && n % 2 === 1 ? 'full' : ''
   )).join('') : '';
@@ -468,16 +440,24 @@ function homeView() {
         </div>
         ${fields}
         ${S.formErr ? `<div class="err full">${esc(S.formErr)}</div>` : ''}
-        <button class="btn pri full" style="padding:14px 22px;font-size:15px" data-click="${on(submit)}">Tạo thiệp mời</button>
+        <button class="btn pri full" style="padding:14px 22px;font-size:15px" data-click="${on(submit)}"${S.busy ? ' disabled' : ''}>${S.busy ? 'Đang tạo…' : 'Tạo thiệp mời'}</button>
       </div>
     </div>
     <div class="foot">
-      <a href="#" class="muted" data-click="${on(() => go(S.authed ? 'admin' : 'login', { loginVal: '', loginErr: false }))}">Trang quản trị →</a>
+      <a href="/tra-cuu" class="muted" data-click="${on(() => go('lookup'))}">Tra cứu thiệp đã tạo</a>
+      <a href="/admin" class="muted" data-click="${on(() => go(S.authed ? 'admin' : 'login', { loginVal: '', loginErr: '' }))}">Trang quản trị →</a>
     </div>
   </div>`;
 }
 
-function submit() {
+function showCard(payload) {
+  S.card = { eventId: payload.eventId, payload };
+  S.cardEdit = { ...payload.data };
+  S.cardMsg = ''; S.cardErr = false; S.copyLabel = 'Copy JSON';
+  go('card');
+}
+
+async function submit() {
   const ev = curEvent();
   if (!ev) { S.formErr = 'Vui lòng chọn sự kiện.'; return render(); }
   for (const i of ev.inputs) {
@@ -486,30 +466,38 @@ function submit() {
       return render();
     }
   }
-  S.formErr = '';
-  const payload = buildPayload(ev, { ...S.formValues });
-  const norm = (x) => (x || '').trim().toLowerCase();
-  const matches = S.guests.filter((g) => g.eventId === ev.id && norm(g.data.name) === norm(S.formValues.name));
-  if (matches.length) { S.dupe = { payload, checkedId: matches[0].id, matches }; animate = true; render(); }
-  else finalize(payload, null);
+  S.formErr = ''; S.busy = true; render();
+  try {
+    const r = await api('/api/guests', { method: 'POST', body: { eventId: ev.id, data: { ...S.formValues } } });
+    S.busy = false;
+    if (r.dupe) {
+      S.dupe = { data: { ...S.formValues }, checkedId: r.dupe[0].id, matches: r.dupe };
+      animate = true;
+      return render();
+    }
+    showCard(r.payload);
+  } catch (e) {
+    S.busy = false; S.formErr = e.message; render();
+  }
 }
-function finalize(payload, replaceId) {
-  S.guests = replaceId ? S.guests.map((g) => (g.id === replaceId ? payload : g)) : [...S.guests, payload];
-  save('ecard.guests', S.guests);
-  S.dupe = null;
-  S.card = { eventId: payload.eventId, payload };
-  S.cardEdit = { ...payload.data };
-  S.cardMsg = ''; S.cardErr = false;
-  S.copyLabel = 'Copy JSON';
-  go('card');
-  if (S.webhook.url) sendWebhook(S.webhook.url, payload, 'auto');
+
+async function resolveDupe(replaceId, force) {
+  S.busy = true; render();
+  try {
+    const r = await api('/api/guests', {
+      method: 'POST',
+      body: { eventId: S.selEventId, data: S.dupe.data, replaceId, force }
+    });
+    S.busy = false; S.dupe = null;
+    showCard(r.payload);
+  } catch (e) {
+    S.busy = false; S.dupe = null; S.formErr = e.message; go('home');
+  }
 }
 
 /* ---------- card result + inline editing ---------- */
 function cardView() {
   const ev = S.events.find((e) => e.id === S.card.eventId);
-  const json = JSON.stringify(S.card.payload, null, 2);
-  // edits are staged in S.cardEdit and only applied to the card on "Lưu"
   const fields = ev ? ev.inputs.map((i) => fieldBlock(
     i, S.cardEdit[i.key] || '', 'c',
     (e) => { S.cardEdit[i.key] = e.target.value; }
@@ -521,7 +509,7 @@ function cardView() {
       <div class="cardpane">
         <div class="cardframe"><canvas id="cardCanvas"></canvas></div>
         <div class="cardbtns">
-          <button class="btn gold" style="flex:2;min-width:180px;padding:15px 22px;font-size:15px" data-click="${on(downloadCard)}">Tải ảnh về</button>
+          <button class="btn gold" style="flex:2;min-width:180px;padding:15px 22px;font-size:15px" data-click="${on(() => downloadCard('#cardCanvas', S.card.payload))}">Tải ảnh về</button>
           <button class="btn" style="flex:1;min-width:120px;padding:15px 22px;font-size:15px" data-click="${on(() => go('home', { card: null }))}">Tạo lại</button>
         </div>
       </div>
@@ -529,52 +517,112 @@ function cardView() {
         <div class="eyebrow" style="padding-bottom:12px;border-bottom:1px solid rgba(32,29,41,.08)">CHỈNH SỬA THÔNG TIN</div>
         <div class="muted" style="font-size:12.5px;line-height:1.5">Sửa thông tin rồi bấm <b>Lưu &amp; cập nhật thiệp</b> — thiệp bên cạnh sẽ vẽ lại ngay.</div>
         ${fields}
-        ${S.cardMsg ? `<div class="${S.cardErr ? 'err' : 'note'}">${esc(S.cardMsg)}</div>` : ''}
-        <button class="btn pri" style="padding:13px 20px;font-size:14.5px" data-click="${on(saveCardEdits)}">Lưu &amp; cập nhật thiệp</button>
-        ${SHOW_JSON_ON_CARD ? `
-        <details class="card" style="padding:14px 18px">
-          <summary style="cursor:pointer;font-size:13px;font-weight:600;color:var(--mut)">Xem payload JSON đã lưu</summary>
-          <pre class="json" style="margin:12px 0 8px;border-radius:8px;padding:12px">${esc(json)}</pre>
-          <button class="btn xs" data-click="${on(() => copy(json))}">${esc(S.copyLabel)}</button>
-        </details>` : ''}
+        ${S.cardMsg ? `<div class="${S.cardErr ? 'err' : 'ok'}">${esc(S.cardMsg)}</div>` : ''}
+        <button class="btn pri" style="padding:13px 20px;font-size:14.5px" data-click="${on(saveCardEdits)}"${S.busy ? ' disabled' : ''}>${S.busy ? 'Đang lưu…' : 'Lưu &amp; cập nhật thiệp'}</button>
       </div>
     </div>
   </div>`;
 }
 
-function saveCardEdits() {
+function downloadCard(sel, payload) {
+  const ev = S.events.find((e) => e.id === payload.eventId), c = $(sel);
+  if (!ev || !c) return;
+  drawCard(c, ev, payload);
+  const name = (payload.data.name || 'khach').trim().replace(/\s+/g, '-').toLowerCase();
+  downloadHref('thiep-' + name + '.png', c.toDataURL('image/png'));
+}
+
+async function saveCardEdits() {
   const ev = S.events.find((e) => e.id === S.card.eventId);
   if (!ev) return;
   for (const i of ev.inputs) {
     if (i.required && !(S.cardEdit[i.key] || '').trim()) {
-      S.cardMsg = 'Vui lòng nhập: ' + i.label;
-      S.cardErr = true;
+      S.cardMsg = 'Vui lòng nhập: ' + i.label; S.cardErr = true;
       return render();
     }
   }
-  const prev = S.card.payload;
-  const next = buildPayload(ev, { ...S.cardEdit });
-  // same guest record, corrected data — lucky number and QR re-derive from it
-  next.id = prev.id;
-  next.createdAt = prev.createdAt;
-  S.card.payload = next;
-  S.guests = S.guests.map((g) => (g.id === prev.id ? next : g));
-  save('ecard.guests', S.guests);
-  S.cardMsg = next.computed.lucky === prev.computed.lucky
-    ? 'Đã cập nhật thiệp.'
-    : 'Đã cập nhật thiệp — Lucky Number & mã QR đổi theo tên/SĐT mới.';
-  S.cardErr = false;
-  render();
-  if (S.webhook.url) sendWebhook(S.webhook.url, next, 'cập nhật');
+  S.busy = true; render();
+  try {
+    const prev = S.card.payload;
+    const r = await api('/api/guests', {
+      method: 'POST',
+      body: { eventId: ev.id, data: { ...S.cardEdit }, replaceId: prev.id }
+    });
+    S.busy = false;
+    S.card = { eventId: r.payload.eventId, payload: r.payload };
+    S.cardErr = false;
+    S.cardMsg = r.payload.computed.lucky === prev.computed.lucky
+      ? 'Đã cập nhật thiệp.'
+      : 'Đã cập nhật thiệp — Lucky Number & mã QR đổi theo tên/SĐT mới.';
+    render();
+  } catch (e) {
+    S.busy = false; S.cardMsg = e.message; S.cardErr = true; render();
+  }
 }
-function downloadCard() {
-  const ev = S.events.find((e) => e.id === S.card.eventId), c = $('#cardCanvas');
-  if (!ev || !c) return;
-  drawCard(c, ev, S.card.payload);
-  const name = (S.card.payload.data.name || 'khach').trim().replace(/\s+/g, '-').toLowerCase();
-  downloadHref('thiep-' + name + '.png', c.toDataURL('image/png'));
+
+/* ---------- /tra-cuu : guest self-service lookup ---------- */
+function lookupView() {
+  const found = S.lookupResult;
+  return `
+  <div class="screen cardscreen">
+    <div class="cardlayout${fade()}" style="${found ? '' : 'max-width:560px'}">
+      ${found ? `
+      <div class="cardpane">
+        <div class="cardframe"><canvas id="lookupCanvas"></canvas></div>
+        <div class="cardbtns">
+          <button class="btn gold" style="flex:2;min-width:180px;padding:15px 22px;font-size:15px" data-click="${on(() => downloadCard('#lookupCanvas', found))}">Tải ảnh về</button>
+          <button class="btn" style="flex:1;min-width:120px;padding:15px 22px;font-size:15px" data-click="${on(() => { S.lookupResult = null; animate = true; render(); })}">Tìm người khác</button>
+        </div>
+      </div>` : ''}
+      <div class="panel editpane" style="${found ? '' : 'max-width:560px;flex:1 1 auto'}">
+        <div class="eyebrow" style="padding-bottom:12px;border-bottom:1px solid rgba(32,29,41,.08)">TRA CỨU THIỆP MỜI</div>
+        <div class="muted" style="font-size:13px;line-height:1.55">Nhập đúng họ tên và số điện thoại bạn đã dùng khi tạo thiệp để nhận lại thiệp của mình.</div>
+        <div class="field">
+          <label class="lbl">SỰ KIỆN</label>
+          <select class="inp" data-k="l.event" data-change="${on((e) => { S.lookupEventId = e.target.value; })}">
+            <option value="">— Chọn sự kiện —</option>
+            ${S.events.map((e) => `<option value="${esc(e.id)}"${e.id === S.lookupEventId ? ' selected' : ''}>${esc(e.name)}</option>`).join('')}
+          </select>
+        </div>
+        <div class="field">
+          <label class="lbl">HỌ VÀ TÊN</label>
+          <input class="inp" data-k="l.name" value="${esc(S.lookupName)}" placeholder="VD: NGUYỄN VĂN A"
+                 data-change="${on((e) => { S.lookupName = e.target.value; })}"
+                 data-key="${on((e) => { if (e.key === 'Enter') doLookup(); })}">
+        </div>
+        <div class="field">
+          <label class="lbl">SỐ ĐIỆN THOẠI</label>
+          <input class="inp" data-k="l.phone" value="${esc(S.lookupPhone)}" placeholder="VD: 0901234567"
+                 data-change="${on((e) => { S.lookupPhone = e.target.value; })}"
+                 data-key="${on((e) => { if (e.key === 'Enter') doLookup(); })}">
+        </div>
+        ${S.lookupErr ? `<div class="err">${esc(S.lookupErr)}</div>` : ''}
+        <button class="btn pri" style="padding:13px 20px;font-size:14.5px" data-click="${on(doLookup)}"${S.busy ? ' disabled' : ''}>${S.busy ? 'Đang tìm…' : 'Tìm thiệp của tôi'}</button>
+        <div style="margin-top:auto;padding-top:8px;font-size:13px">
+          <a href="/" data-click="${on(() => go('home'))}">← Về trang tạo thiệp</a>
+        </div>
+      </div>
+    </div>
+  </div>`;
 }
-const copy = (text) => navigator.clipboard.writeText(text).then(() => { S.copyLabel = 'Đã copy ✓'; render(); });
+
+async function doLookup() {
+  if (!S.lookupEventId) { S.lookupErr = 'Vui lòng chọn sự kiện.'; return render(); }
+  if (!S.lookupName.trim() || !S.lookupPhone.trim()) {
+    S.lookupErr = 'Cần nhập cả họ tên và số điện thoại.';
+    return render();
+  }
+  S.lookupErr = ''; S.busy = true; render();
+  try {
+    const r = await api('/api/lookup', {
+      method: 'POST',
+      body: { eventId: S.lookupEventId, name: S.lookupName, phone: S.lookupPhone }
+    });
+    S.busy = false; S.lookupResult = r.payload; animate = true; render();
+  } catch (e) {
+    S.busy = false; S.lookupResult = null; S.lookupErr = e.message; render();
+  }
+}
 
 /* ---------- duplicate-name modal ---------- */
 function dupeModal() {
@@ -593,8 +641,8 @@ function dupeModal() {
           </label>`).join('')}
       </div>
       <div style="display:flex;gap:10px;margin-top:18px;flex-wrap:wrap">
-        <button class="btn" style="flex:1;min-width:110px;border:none;background:#b06a2c;color:#fff" data-click="${on(() => finalize(d.payload, d.checkedId))}">Thay thế</button>
-        <button class="btn" style="flex:1;min-width:110px" data-click="${on(() => finalize(d.payload, null))}">Tạo mới</button>
+        <button class="btn" style="flex:1;min-width:110px;border:none;background:#b06a2c;color:#fff" data-click="${on(() => resolveDupe(d.checkedId, false))}">Thay thế</button>
+        <button class="btn" style="flex:1;min-width:110px" data-click="${on(() => resolveDupe(null, true))}">Tạo mới</button>
         <button class="btn" style="flex:1;min-width:110px" data-click="${on(() => { S.dupe = null; render(); })}">Hủy</button>
       </div>
     </div>
@@ -603,30 +651,52 @@ function dupeModal() {
 
 /* ---------- admin login ---------- */
 function loginView() {
-  const tryLogin = () => {
-    if (S.loginVal === ADMIN_PASSWORD) { S.authed = true; go('admin', { loginVal: '' }); }
-    else { S.loginErr = true; render(); }
-  };
   return `
   <div class="screen" style="display:flex;align-items:center;justify-content:center;padding:20px">
-    <div class="panel fade" style="width:100%;max-width:380px;padding:30px">
+    <div class="panel${fade()}" style="width:100%;max-width:380px;padding:30px">
       <div style="width:44px;height:44px;border-radius:12px;background:var(--ink);display:flex;align-items:center;justify-content:center;color:#fff;font:700 18px 'Playfair Display',serif;margin-bottom:14px">A</div>
       <h2 style="margin:0 0 4px;font:700 20px 'Be Vietnam Pro',sans-serif">Trang quản trị</h2>
-      <p class="muted" style="margin:0 0 18px;font-size:13px">Đăng nhập demo — mật khẩu: <code class="keytag">${esc(ADMIN_PASSWORD)}</code></p>
+      <p class="muted" style="margin:0 0 18px;font-size:13px">Mật khẩu do máy chủ giữ — biến môi trường <code class="keytag">ADMIN_PASSWORD</code>.</p>
       <input class="inp" type="password" placeholder="Mật khẩu" data-k="login" value="${esc(S.loginVal)}"
-             data-change="${on((e) => { S.loginVal = e.target.value; if (S.loginErr) { S.loginErr = false; render(); } })}"
-             data-key="${on((e) => { if (e.key === 'Enter') tryLogin(); })}">
-      ${S.loginErr ? `<div style="color:var(--danger);font-size:13px;margin-top:8px">Mật khẩu chưa đúng.</div>` : ''}
-      <button class="btn pri" style="width:100%;margin-top:14px;padding:13px;font-size:15px" data-click="${on(tryLogin)}">Đăng nhập</button>
-      <div style="margin-top:16px;text-align:center"><a href="#" class="muted" style="font-size:13px" data-click="${on(() => go('home'))}">← Về trang khách</a></div>
+             data-change="${on((e) => { S.loginVal = e.target.value; if (S.loginErr) { S.loginErr = ''; render(); } })}"
+             data-key="${on((e) => { if (e.key === 'Enter') doLogin(); })}">
+      ${S.loginErr ? `<div style="color:var(--danger);font-size:13px;margin-top:8px">${esc(S.loginErr)}</div>` : ''}
+      <button class="btn pri" style="width:100%;margin-top:14px;padding:13px;font-size:15px" data-click="${on(doLogin)}"${S.busy ? ' disabled' : ''}>${S.busy ? 'Đang kiểm tra…' : 'Đăng nhập'}</button>
+      <div style="margin-top:16px;text-align:center"><a href="/" class="muted" style="font-size:13px" data-click="${on(() => go('home'))}">← Về trang khách</a></div>
     </div>
   </div>`;
+}
+
+async function doLogin() {
+  S.busy = true; render();
+  try {
+    const r = await api('/api/admin/login', { method: 'POST', body: { password: S.loginVal } });
+    setToken(r.token);
+    await loadAdminState();
+    S.busy = false; S.loginVal = '';
+    go('admin');
+  } catch (e) {
+    S.busy = false; S.loginErr = e.message; render();
+  }
+}
+async function loadAdminState() {
+  const r = await api('/api/admin/state');
+  S.events = r.events; S.guests = r.guests; S.logs = r.logs; S.authed = true;
+}
+async function pushEvents() {
+  const r = await api('/api/admin/events', { method: 'PUT', body: { events: S.events } });
+  S.events = r.events;
+}
+async function logout() {
+  setToken(''); S.authed = false; S.guests = []; S.logs = [];
+  try { const r = await api('/api/bootstrap'); S.events = r.events; } catch (e) {}
+  go('home');
 }
 
 /* ---------- admin shell ---------- */
 function adminView() {
   const tab = S.adminTab;
-  const body = tab === 'guests' ? adminGuests() : tab === 'webhook' ? adminWebhook() : adminEvents();
+  const body = tab === 'guests' ? adminGuests() : tab === 'logs' ? adminLogs() : adminEvents();
   const t = (id, label) =>
     `<button class="tab${tab === id ? ' on' : ''}" data-click="${on(() => { S.adminTab = id; render(); })}">${label}</button>`;
   return `
@@ -635,10 +705,10 @@ function adminView() {
       <div style="display:flex;align-items:center;gap:10px;font:700 16px 'Be Vietnam Pro',sans-serif">
         <span style="width:30px;height:30px;border-radius:8px;background:var(--ink);color:#fff;display:inline-flex;align-items:center;justify-content:center;font:700 13px 'Playfair Display',serif">A</span>Quản trị thiệp sự kiện
       </div>
-      <div class="tabs">${t('events', 'Sự kiện')}${t('guests', `Khách (${S.guests.length})`)}${t('webhook', 'Webhook API')}</div>
+      <div class="tabs">${t('events', 'Sự kiện')}${t('guests', `Khách (${S.guests.length})`)}${t('logs', 'Nhật ký API')}</div>
       <div style="margin-left:auto;display:flex;gap:14px;align-items:center">
-        <a href="#" style="font-size:13px" data-click="${on(() => go('home'))}">Xem trang khách</a>
-        <button class="btn xs" data-click="${on(() => { S.authed = false; go('home'); })}">Đăng xuất</button>
+        <a href="/" style="font-size:13px" data-click="${on(() => go('home'))}">Xem trang khách</a>
+        <button class="btn xs" data-click="${on(logout)}">Đăng xuất</button>
       </div>
     </div>
     <div style="max-width:1080px;margin:0 auto;padding:26px 22px 60px;box-sizing:border-box">${body}</div>
@@ -647,30 +717,32 @@ function adminView() {
 
 function adminEvents() {
   const cards = S.events.map((e) => {
-    const swatch = e.theme ? `linear-gradient(135deg,${e.theme.c1},${e.theme.c2})` : '#201d29';
+    const swatch = e.bg && e.bg.startsWith('/') ? `url('${esc(e.bg)}') center/cover`
+      : e.theme ? `linear-gradient(135deg,${e.theme.c1},${e.theme.c2})` : '#201d29';
     const meta = `${e.fields.length} thành phần · ${e.inputs.length} trường nhập · ${S.guests.filter((g) => g.eventId === e.id).length} khách`;
-    const onRename = on(() => {
+    const apiOn = e.api && e.api.enabled && e.api.url;
+    const onRename = on(async () => {
       const n = prompt('Tên sự kiện mới:', e.name);
       if (!n) return;
-      e.name = n; save('ecard.events', S.events); render();
+      e.name = n; await pushEvents(); render();
     });
-    const onDel = on(() => {
+    const onDel = on(async () => {
       if (!confirm('Xóa sự kiện "' + e.name + '"?')) return;
       S.events = S.events.filter((x) => x.id !== e.id);
       if (S.selEventId === e.id) S.selEventId = S.events[0] ? S.events[0].id : '';
-      save('ecard.events', S.events); render();
+      await pushEvents(); render();
     });
-    const onEdit = on(() => go('editor', { editor: { ev: structuredClone(e), sel: null } }));
     return `
     <div class="card" style="overflow:hidden;display:flex;flex-direction:column">
       <div style="height:88px;background:${swatch};position:relative">
-        <span style="position:absolute;left:14px;bottom:10px;color:#fff;font:600 11px 'Be Vietnam Pro',sans-serif;letter-spacing:.1em;opacity:.85">${e.w} × ${e.h}</span>
+        <span style="position:absolute;left:14px;bottom:10px;color:#fff;font:600 11px 'Be Vietnam Pro',sans-serif;letter-spacing:.1em;text-shadow:0 1px 3px rgba(0,0,0,.7)">${e.w} × ${e.h}</span>
+        ${apiOn ? `<span style="position:absolute;right:10px;top:10px;background:rgba(30,122,70,.92);color:#fff;font:700 10px 'Be Vietnam Pro',sans-serif;padding:3px 8px;border-radius:20px">API</span>` : ''}
       </div>
       <div style="padding:16px;display:flex;flex-direction:column;gap:10px;flex:1">
         <div style="font:600 14.5px/1.4 'Be Vietnam Pro',sans-serif">${esc(e.name)}</div>
         <div class="muted" style="font-size:12.5px">${esc(meta)}</div>
         <div style="display:flex;gap:8px;margin-top:auto;flex-wrap:wrap">
-          <button class="btn dark sm" style="flex:1" data-click="${onEdit}">Sửa thiết kế</button>
+          <button class="btn dark sm" style="flex:1" data-click="${on(() => go('editor', { editor: { ev: structuredClone(e), sel: null }, apiTest: null }))}">Sửa thiết kế &amp; API</button>
           <button class="btn sm" data-click="${onRename}">Đổi tên</button>
           <button class="btn danger sm" data-click="${onDel}">Xóa</button>
         </div>
@@ -678,21 +750,22 @@ function adminEvents() {
     </div>`;
   }).join('');
 
-  const onAdd = on(() => {
+  const onAdd = on(async () => {
+    const base = S.events[S.events.length - 1];
+    if (!base) return;
     const n = prompt('Tên sự kiện mới:', 'SỰ KIỆN MỚI');
     if (!n) return;
+    const copy = structuredClone(base);
     S.events = [...S.events, {
-      id: uid(), name: n, w: 1080, h: 1350, bg: null, theme: { ...DEFAULT_THEME }, inputs: defaultInputs(),
-      fields: [
-        newTextField({ type: 'bind', bind: 'fullNameDisplay', prefix: '', y: 300, size: 54, font: 'Playfair Display', weight: '700', upper: true, maxW: 940 }),
-        { id: uid(), type: 'qr', x: 540, y: 1010, size: 220 }
-      ]
+      ...copy, id: uid(), name: n, bg: null,
+      fields: copy.fields.map((f) => ({ ...f, id: uid() })),
+      api: { ...copy.api, enabled: false, url: '', auth: { type: 'none', username: '', password: '', hasPassword: false } }
     }];
-    save('ecard.events', S.events); render();
+    await pushEvents(); render();
   });
   return `
   <div class="head">
-    <div><h2 class="sec">Sự kiện &amp; mẫu thiệp</h2><p class="sub">Mỗi sự kiện là một mẫu thiệp. Bấm "Sửa thiết kế" để kéo-thả vị trí các trường trên ảnh.</p></div>
+    <div><h2 class="sec">Sự kiện &amp; mẫu thiệp</h2><p class="sub">Mỗi sự kiện là một mẫu thiệp kèm cấu hình API riêng. Bấm "Sửa thiết kế &amp; API".</p></div>
     <button class="btn pri" data-click="${onAdd}">+ Thêm sự kiện</button>
   </div>
   <div class="grid">${cards}</div>`;
@@ -700,7 +773,7 @@ function adminEvents() {
 
 function adminGuests() {
   const rows = [...S.guests].reverse().map((g) => `
-    <div class="row" data-click="${on(() => { S.viewGuest = g; S.resendMsg = ''; S.copyLabel = 'Copy JSON'; animate = true; render(); })}">
+    <div class="row" data-click="${on(() => { S.viewGuest = g; S.copyLabel = 'Copy JSON'; animate = true; render(); })}">
       <div style="font:600 14px 'Be Vietnam Pro',sans-serif;min-width:180px">${esc((g.computed && g.computed.fullNameDisplay) || g.data.name || '—')}</div>
       <div class="muted" style="font-size:12.5px;flex:1;min-width:160px">${esc(g.eventName)}</div>
       <div style="font-size:12px;color:var(--faint)">${esc(new Date(g.createdAt).toLocaleString('vi-VN'))}</div>
@@ -708,83 +781,35 @@ function adminGuests() {
     </div>`).join('');
   return `
   <div class="head">
-    <div><h2 class="sec">Dữ liệu khách đã tạo thiệp</h2><p class="sub">Payload JSON lưu trên trình duyệt này (localStorage), sẵn sàng bắn về API bên thứ 3.</p></div>
+    <div><h2 class="sec">Dữ liệu khách đã tạo thiệp</h2><p class="sub">Lưu trên máy chủ — khách tra cứu lại được từ bất kỳ thiết bị nào qua <a href="/tra-cuu" data-click="${on(() => go('lookup'))}">/tra-cuu</a>.</p></div>
     <button class="btn" data-click="${on(() => downloadJson('guests-payload.json', S.guests))}">Tải toàn bộ JSON</button>
   </div>
   ${S.guests.length === 0
-    ? `<div style="background:var(--panel);border:1px dashed var(--line2);border-radius:14px;padding:40px;text-align:center;color:var(--mut);font-size:14px">Chưa có khách nào tạo thiệp. Sang <a href="#" data-click="${on(() => go('home'))}">trang khách</a> để thử.</div>`
+    ? `<div style="background:var(--panel);border:1px dashed var(--line2);border-radius:14px;padding:40px;text-align:center;color:var(--mut);font-size:14px">Chưa có khách nào tạo thiệp. Sang <a href="/" data-click="${on(() => go('home'))}">trang khách</a> để thử.</div>`
     : `<div class="stack" style="gap:8px">${rows}</div>`}`;
 }
 
-function adminWebhook() {
-  const url = S.webhookDraft != null ? S.webhookDraft : S.webhook.url;
-  const onSave = on(() => {
-    S.webhook = { ...S.webhook, url: url.trim() };
-    S.webhookDraft = null;
-    S.webhookMsg = 'Đã lưu. Mỗi thiệp mới tạo sẽ tự động POST về URL này.';
-    save('ecard.webhook', S.webhook); render();
-  });
-  const onTest = on(async () => {
-    if (!url.trim()) { S.webhookMsg = 'Nhập URL trước đã.'; return render(); }
-    S.webhookMsg = 'Đang gửi payload mẫu…'; render();
-    const sample = samplePayload(S.events[0] || { id: 'demo', name: 'demo', inputs: [] });
-    const r = await sendWebhook(url.trim(), sample, 'gửi thử');
-    S.webhookMsg = r.ok ? 'Gửi thành công ✓' : r.line;
-    render();
-  });
+function adminLogs() {
   return `
-  <div style="max-width:640px">
-    <h2 class="sec" style="margin-bottom:4px">Webhook — bắn dữ liệu về bên thứ 3</h2>
-    <p class="muted" style="margin:0 0 18px;font-size:13px;line-height:1.6">Mỗi khi khách tạo thiệp, payload JSON sẽ được POST tới URL bên dưới. Lưu ý: gửi trực tiếp từ trình duyệt nên endpoint cần cho phép CORS; bản chạy thật nên gửi qua server trung gian.</p>
-    <div class="card" style="padding:22px;display:flex;flex-direction:column;gap:14px">
-      <label class="lbl">URL WEBHOOK (POST, JSON)</label>
-      <input class="inp" data-k="webhook.url" value="${esc(url)}" placeholder="https://api.example.com/hooks/guests"
-             data-change="${on((e) => { S.webhookDraft = e.target.value; })}">
-      <div style="display:flex;gap:10px;flex-wrap:wrap">
-        <button class="btn pri" data-click="${onSave}">Lưu cấu hình</button>
-        <button class="btn" data-click="${onTest}">Gửi thử payload mẫu</button>
-      </div>
-      ${S.webhookMsg ? `<div class="note">${esc(S.webhookMsg)}</div>` : ''}
-    </div>
-    <h3 class="sec" style="margin:26px 0 10px">Lịch sử gửi</h3>
-    ${S.webhook.logs.length === 0
-      ? `<div style="font-size:13px;color:var(--faint)">Chưa có lần gửi nào.</div>`
-      : `<div class="stack" style="gap:6px">${S.webhook.logs.map((l) =>
-          `<div class="logmark" style="color:${l.ok ? '#1e7a46' : 'var(--danger)'}">${esc(l.line)}</div>`).join('')}</div>`}
-  </div>`;
-}
-
-async function sendWebhook(url, payload, kind) {
-  const t = new Date().toLocaleTimeString('vi-VN');
-  let line, ok = false;
-  try {
-    const r = await fetch(url, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
-    });
-    ok = r.ok;
-    line = `[${t}] ${kind} → ${url} — HTTP ${r.status}`;
-  } catch (e) {
-    line = `[${t}] ${kind} → ${url} — LỖI: không gửi được (mạng hoặc CORS chặn)`;
-  }
-  S.webhook = { ...S.webhook, logs: [{ line, ok }, ...S.webhook.logs].slice(0, 30) };
-  save('ecard.webhook', S.webhook);
-  render();
-  return { ok, line };
+  <div class="head">
+    <div><h2 class="sec">Nhật ký gửi API</h2><p class="sub">50 lần gửi gần nhất từ mọi sự kiện. Máy chủ gửi đi — mật khẩu không bao giờ xuống trình duyệt.</p></div>
+    <button class="btn" data-click="${on(async () => { await loadAdminState(); render(); })}">Tải lại</button>
+  </div>
+  ${S.logs.length === 0
+    ? `<div style="font-size:13px;color:var(--faint)">Chưa có lần gửi nào.</div>`
+    : `<div class="stack" style="gap:6px">${S.logs.map((l) => `
+        <div class="logmark" style="color:${l.ok ? '#1e7a46' : 'var(--danger)'}">
+          <b>${esc(new Date(l.at).toLocaleString('vi-VN'))}</b> · ${esc(l.eventName)} · ${esc(l.kind)}<br>${esc(l.line)}
+        </div>`).join('')}</div>`}`;
 }
 
 /* ---------- guest payload modal ---------- */
 function guestModal() {
   const g = S.viewGuest, json = JSON.stringify(g, null, 2);
-  const onResend = on(async () => {
-    if (!S.webhook.url) { S.resendMsg = 'Chưa cấu hình URL webhook (tab Webhook API).'; return render(); }
-    S.resendMsg = 'Đang gửi…'; render();
-    const r = await sendWebhook(S.webhook.url, g, 'thủ công');
-    S.resendMsg = r.line; render();
-  });
-  const onDelete = on(() => {
+  const onDelete = on(async () => {
     if (!confirm('Xóa bản ghi khách này?')) return;
+    await api('/api/admin/guests/' + encodeURIComponent(g.id), { method: 'DELETE' });
     S.guests = S.guests.filter((x) => x.id !== g.id);
-    save('ecard.guests', S.guests);
     S.viewGuest = null; render();
   });
   return `
@@ -798,13 +823,12 @@ function guestModal() {
       <div style="display:flex;gap:8px;flex-wrap:wrap">
         <button class="btn xs" data-click="${on(() => copy(json))}">${esc(S.copyLabel)}</button>
         <button class="btn xs" data-click="${on(() => downloadJson('guest-' + g.id + '.json', g))}">Tải .json</button>
-        <button class="btn pri xs" data-click="${onResend}">Gửi webhook</button>
         <button class="btn danger xs" data-click="${onDelete}">Xóa bản ghi</button>
       </div>
-      ${S.resendMsg ? `<div class="note" style="margin-top:10px">${esc(S.resendMsg)}</div>` : ''}
     </div>
   </div>`;
 }
+const copy = (text) => navigator.clipboard.writeText(text).then(() => { S.copyLabel = 'Đã copy ✓'; render(); });
 
 /* ---------- template editor ---------- */
 const newTextField = (extra) => ({
@@ -856,8 +880,8 @@ function uploadBg(e) {
   rd.onload = () => {
     const img = new Image();
     img.onload = () => {
-      // downscale before storing — localStorage chokes on full-size data URLs
-      const MAX = 1400, sc = Math.min(1, MAX / Math.max(img.width, img.height));
+      // downscale before storing — a full-size data URL bloats data.json
+      const MAX = 1800, sc = Math.min(1, MAX / Math.max(img.width, img.height));
       const c = document.createElement('canvas');
       c.width = Math.round(img.width * sc);
       c.height = Math.round(img.height * sc);
@@ -874,12 +898,12 @@ function uploadBg(e) {
 }
 
 function editorView() {
-  const ed = S.editor, ev = ed.ev, sample = samplePayload(ev);
+  const ed = S.editor, ev = ed.ev, sample = Shared.samplePayload(ev);
   const sc = (S._edW || 540) / ev.w;
 
   const placements = ev.fields.map((f) => {
-    const isQr = f.type === 'qr', on_ = ed.sel === f.id;
-    const outline = on_ ? '2px solid #38bdf8' : '1px dashed rgba(255,255,255,.25)';
+    const isQr = f.type === 'qr', picked = ed.sel === f.id;
+    const outline = picked ? '2px solid #38bdf8' : '1px dashed rgba(255,255,255,.25)';
     let style = `position:absolute;cursor:move;touch-action:none;line-height:1.15;white-space:nowrap;` +
       `outline:${outline};outline-offset:2px;border-radius:3px;`;
     let inner = '';
@@ -935,18 +959,20 @@ function editorView() {
       })}">✕</button>
     </div>`).join('');
 
-  const onSave = on(() => {
+  const onSave = on(async () => {
     S.events = S.events.map((x) => (x.id === ev.id ? ev : x));
-    if (save('ecard.events', S.events)) go('admin', { editor: null });
+    S.busy = true; render();
+    try { await pushEvents(); S.busy = false; go('admin', { editor: null, apiTest: null }); }
+    catch (e) { S.busy = false; alert('Không lưu được: ' + e.message); render(); }
   });
 
   return `
   <div class="screen">
     <div class="topbar" style="padding:12px 22px;gap:14px">
-      <button class="btn xs" data-click="${on(() => go('admin', { editor: null }))}">← Hủy</button>
+      <button class="btn xs" data-click="${on(() => go('admin', { editor: null, apiTest: null }))}">← Hủy</button>
       <input class="inp sm" style="flex:1;min-width:200px;font:600 14.5px 'Be Vietnam Pro',sans-serif" data-k="ed.name" value="${esc(ev.name)}"
              data-change="${on((e) => { ev.name = e.target.value; })}">
-      <button class="btn pri" style="padding:10px 20px" data-click="${onSave}">Lưu template</button>
+      <button class="btn pri" style="padding:10px 20px" data-click="${onSave}"${S.busy ? ' disabled' : ''}>${S.busy ? 'Đang lưu…' : 'Lưu template'}</button>
     </div>
     <div style="display:flex;gap:22px;padding:22px;flex-wrap:wrap;align-items:flex-start;max-width:1180px;margin:0 auto;box-sizing:border-box">
       <div style="flex:1.3;min-width:300px">
@@ -962,14 +988,15 @@ function editorView() {
           <div class="lbl" style="font-size:13px;letter-spacing:.06em">ẢNH NỀN THIỆP</div>
           <div class="muted" style="font-size:12.5px;line-height:1.5">Tải lên ảnh thiết kế sẵn (PNG/JPG) đã chừa trống vị trí. Chưa có ảnh thì dùng nền demo.</div>
           <input type="file" accept="image/*" style="font-size:12.5px" data-file="${on(uploadBg)}">
-          ${ev.bg ? `<button class="btn danger xs" style="align-self:flex-start" data-click="${on(() => { ev.bg = null; render(); })}">Bỏ ảnh nền (về nền demo)</button>` : ''}
+          ${ev.bg ? `<div class="muted" style="font-size:11.5px">Đang dùng: <span class="keytag">${esc(ev.bg.startsWith('data:') ? 'ảnh tải lên' : ev.bg)}</span></div>
+          <button class="btn danger xs" style="align-self:flex-start" data-click="${on(() => { ev.bg = null; render(); })}">Bỏ ảnh nền (về nền demo)</button>` : ''}
           <div style="display:flex;gap:10px;align-items:center">
             <label class="muted" style="font-size:12px">Khổ thiệp:</label>
             <input class="inp sm" style="width:70px" data-k="ed.w" value="${ev.w}"
-                   data-change="${on((e) => { const n = parseInt(e.target.value); if (!isNaN(n)) { ev.w = Math.max(200, Math.min(3000, n)); render(); } })}">
+                   data-change="${on((e) => { const n = parseInt(e.target.value); if (!isNaN(n)) { ev.w = Math.max(200, Math.min(4000, n)); render(); } })}">
             <span style="color:var(--faint)">×</span>
             <input class="inp sm" style="width:70px" data-k="ed.h" value="${ev.h}"
-                   data-change="${on((e) => { const n = parseInt(e.target.value); if (!isNaN(n)) { ev.h = Math.max(200, Math.min(3000, n)); render(); } })}">
+                   data-change="${on((e) => { const n = parseInt(e.target.value); if (!isNaN(n)) { ev.h = Math.max(200, Math.min(4000, n)); render(); } })}">
             <span style="font-size:12px;color:var(--faint)">px</span>
           </div>
         </div>
@@ -986,17 +1013,122 @@ function editorView() {
         <div class="card" style="padding:18px;display:flex;flex-direction:column;gap:10px">
           <div class="lbl" style="font-size:13px;letter-spacing:.06em">THÀNH PHẦN TRÊN THIỆP</div>
           <div style="display:flex;gap:8px;flex-wrap:wrap">
-            <button class="btn xs" data-click="${on(() => addField(newTextField({ type: 'bind', bind: (ev.inputs[0] && ev.inputs[0].key) || 'name', prefix: '' })))}">+ Dữ liệu khách</button>
-            <button class="btn xs" data-click="${on(() => addField(newTextField({ type: 'static', text: 'Nội dung mới' })))}">+ Chữ tĩnh</button>
-            <button class="btn xs" data-click="${on(() => addField({ id: uid(), type: 'qr', x: 540, y: 900, size: 220 }))}">+ QR check-in</button>
-            <button class="btn xs" data-click="${on(() => addField(newTextField({ type: 'bind', bind: 'lucky', prefix: 'Lucky Number: ', color: '#e9c88f' })))}">+ Lucky Number</button>
+            <button class="btn xs" data-click="${on(() => addField(newTextField({ type: 'bind', bind: (ev.inputs[0] && ev.inputs[0].key) || 'name', prefix: '', x: Math.round(ev.w / 2), y: Math.round(ev.h * 0.35) })))}">+ Dữ liệu khách</button>
+            <button class="btn xs" data-click="${on(() => addField(newTextField({ type: 'static', text: 'Nội dung mới', x: Math.round(ev.w / 2), y: Math.round(ev.h * 0.45) })))}">+ Chữ tĩnh</button>
+            <button class="btn xs" data-click="${on(() => addField({ id: uid(), type: 'qr', x: Math.round(ev.w / 2), y: Math.round(ev.h * 0.6), size: Math.round(ev.w / 5) }))}">+ QR check-in</button>
+            <button class="btn xs" data-click="${on(() => addField(newTextField({ type: 'bind', bind: 'lucky', prefix: 'Lucky Number: ', color: '#e9c88f', x: Math.round(ev.w / 2), y: Math.round(ev.h * 0.5) })))}">+ Lucky Number</button>
           </div>
           <div class="stack" style="gap:5px;max-height:180px;overflow:auto">${placeList}</div>
         </div>
 
+        ${apiPanel(ev)}
         ${selField() ? inspector(ev, selField()) : ''}
       </div>
     </div>
+  </div>`;
+}
+
+/* ---------- per-event API integration config ---------- */
+const headersToText = (h) => Object.entries(h || {}).map(([k, v]) => `${k}: ${v}`).join('\n');
+function textToHeaders(t) {
+  const o = {};
+  for (const line of String(t).split('\n')) {
+    const i = line.indexOf(':');
+    if (i > 0) {
+      const k = line.slice(0, i).trim();
+      if (k) o[k] = line.slice(i + 1).trim();
+    }
+  }
+  return o;
+}
+
+function apiPanel(ev) {
+  if (!ev.api) {
+    ev.api = { enabled: false, url: '', method: 'POST', auth: { type: 'none', username: '', password: null }, headers: {}, bodyTemplate: '' };
+  }
+  const a = ev.api;
+  a.auth = a.auth || { type: 'none', username: '', password: null };
+  const t = S.apiTest;
+  const toks = Shared.apiPlaceholders(ev).map((k) => `<span class="tok">{{${esc(k)}}}</span>`).join('');
+
+  const onTest = on(async () => {
+    S.busy = true; render();
+    try {
+      // save first so the server tests exactly what is configured here
+      S.events = S.events.map((x) => (x.id === ev.id ? ev : x));
+      await pushEvents();
+      S.apiTest = await api('/api/admin/events/' + ev.id + '/test', { method: 'POST' });
+      if (S.apiTest.logs) S.logs = S.apiTest.logs;
+    } catch (e) {
+      S.apiTest = { result: { ok: false, line: e.message } };
+    }
+    S.busy = false; render();
+  });
+
+  return `
+  <div class="card" style="padding:18px;display:flex;flex-direction:column;gap:10px">
+    <div class="lbl" style="font-size:13px;letter-spacing:.06em">TÍCH HỢP API BÊN THỨ 3</div>
+    <div class="muted" style="font-size:12.5px;line-height:1.5">Máy chủ sẽ gửi payload này mỗi khi khách tạo hoặc sửa thiệp của sự kiện này.</div>
+
+    <label class="chk"><input type="checkbox"${a.enabled ? ' checked' : ''}
+      data-change="${on(() => { a.enabled = !a.enabled; render(); })}">Bật gửi tự động</label>
+
+    <div class="field" style="gap:6px">
+      <label class="lbl plain">URL</label>
+      <input class="inp sm" data-k="api.url" value="${esc(a.url || '')}" placeholder="https://checkin.delfi.vn/api/v1/clients/upsert"
+             data-change="${on((e) => { a.url = e.target.value; })}">
+    </div>
+
+    <div style="display:flex;gap:10px;flex-wrap:wrap">
+      <div class="field" style="gap:6px;width:104px">
+        <label class="lbl plain">Method</label>
+        <select class="inp sm" data-k="api.method" data-change="${on((e) => { a.method = e.target.value; })}">
+          ${['POST', 'PUT', 'PATCH'].map((m) => `<option${m === (a.method || 'POST') ? ' selected' : ''}>${m}</option>`).join('')}
+        </select>
+      </div>
+      <div class="field" style="gap:6px;flex:1;min-width:130px">
+        <label class="lbl plain">Xác thực</label>
+        <select class="inp sm" data-k="api.authtype" data-change="${on((e) => { a.auth.type = e.target.value; render(); })}">
+          <option value="none"${a.auth.type === 'none' ? ' selected' : ''}>Không</option>
+          <option value="basic"${a.auth.type === 'basic' ? ' selected' : ''}>Basic Auth</option>
+        </select>
+      </div>
+    </div>
+
+    ${a.auth.type === 'basic' ? `
+    <div style="display:flex;gap:10px;flex-wrap:wrap">
+      <div class="field" style="gap:6px;flex:1;min-width:120px">
+        <label class="lbl plain">Username</label>
+        <input class="inp sm" data-k="api.user" value="${esc(a.auth.username || '')}"
+               data-change="${on((e) => { a.auth.username = e.target.value; })}">
+      </div>
+      <div class="field" style="gap:6px;flex:1;min-width:120px">
+        <label class="lbl plain">Password</label>
+        <input class="inp sm" type="password" data-k="api.pass"
+               placeholder="${a.auth.hasPassword ? '•••••••• (đã lưu)' : 'chưa đặt'}"
+               data-change="${on((e) => { a.auth.password = e.target.value; })}">
+      </div>
+    </div>
+    <div class="warn">Mật khẩu chỉ nằm trên máy chủ, không bao giờ gửi về trình duyệt. Để trống ô này nghĩa là <b>giữ nguyên</b> mật khẩu đang lưu.</div>` : ''}
+
+    <div class="field" style="gap:6px">
+      <label class="lbl plain">Headers — mỗi dòng một <code>Key: Value</code></label>
+      <textarea class="inp sm" rows="3" data-k="api.headers"
+                data-change="${on((e) => { a.headers = textToHeaders(e.target.value); })}">${esc(headersToText(a.headers))}</textarea>
+    </div>
+
+    <div class="field" style="gap:6px">
+      <label class="lbl plain">Body JSON</label>
+      <textarea class="inp sm" rows="14" data-k="api.body"
+                data-change="${on((e) => { a.bodyTemplate = e.target.value; })}">${esc(a.bodyTemplate || '')}</textarea>
+      <div class="muted" style="font-size:11.5px;line-height:1.8">Biến dùng được: ${toks}</div>
+    </div>
+
+    <button class="btn xs" style="align-self:flex-start" data-click="${onTest}"${S.busy ? ' disabled' : ''}>Lưu &amp; gửi thử payload mẫu</button>
+
+    ${t ? `
+      ${t.preview ? `<div class="field" style="gap:6px"><label class="lbl plain">Payload sẽ gửi</label><pre class="json">${esc(t.preview)}</pre></div>` : ''}
+      <div class="${t.result && t.result.ok ? 'ok' : 'err'}" style="word-break:break-all">${esc(t.result ? t.result.line : '')}</div>` : ''}
   </div>`;
 }
 
@@ -1004,7 +1136,7 @@ function inspector(ev, sel) {
   const isText = sel.type !== 'qr';
   const num = (k, label, width, parse) => `
     <div class="field" style="gap:6px;width:${width}">
-      <label class="lbl" style="font-size:11.5px;letter-spacing:0">${label}</label>
+      <label class="lbl plain">${label}</label>
       <input class="inp sm" data-k="sel.${k}" value="${esc(sel[k] ?? 0)}"
              data-change="${on((e) => { const n = parse(e.target.value); if (n != null) edSel((f) => { f[k] = n; }); })}">
     </div>`;
@@ -1013,7 +1145,7 @@ function inspector(ev, sel) {
     `<button class="seg${(sel.align || 'center') === a ? ' on' : ''}" data-click="${on(() => edSel((f) => { f.align = a; }))}">${label}</button>`;
 
   const bindOptions = [
-    ...ev.inputs.map((i) => ({ v: i.key, label: i.label + ' (' + i.key + ')' })),
+    ...(ev.inputs || []).map((i) => ({ v: i.key, label: i.label + ' (' + i.key + ')' })),
     { v: 'fullNameDisplay', label: 'Danh xưng + Họ tên (fullNameDisplay)' },
     { v: 'lucky', label: 'Lucky Number (tự sinh)' }
   ];
@@ -1024,20 +1156,20 @@ function inspector(ev, sel) {
 
     ${sel.type === 'bind' ? `
     <div class="field" style="gap:6px">
-      <label class="lbl" style="font-size:11.5px;letter-spacing:0">Nguồn dữ liệu</label>
+      <label class="lbl plain">Nguồn dữ liệu</label>
       <select class="inp sm" data-k="sel.bind" data-change="${on((e) => edSel((f) => { f.bind = e.target.value; }))}">
         ${bindOptions.map((b) => `<option value="${esc(b.v)}"${b.v === sel.bind ? ' selected' : ''}>${esc(b.label)}</option>`).join('')}
       </select>
     </div>
     <div class="field" style="gap:6px">
-      <label class="lbl" style="font-size:11.5px;letter-spacing:0">Chữ đứng trước (prefix)</label>
+      <label class="lbl plain">Chữ đứng trước (prefix)</label>
       <input class="inp sm" data-k="sel.prefix" value="${esc(sel.prefix || '')}"
              data-change="${on((e) => edSel((f) => { f.prefix = e.target.value; }))}">
     </div>` : ''}
 
     ${sel.type === 'static' ? `
     <div class="field" style="gap:6px">
-      <label class="lbl" style="font-size:11.5px;letter-spacing:0">Nội dung chữ</label>
+      <label class="lbl plain">Nội dung chữ</label>
       <input class="inp sm" data-k="sel.text" value="${esc(sel.text || '')}"
              data-change="${on((e) => edSel((f) => { f.text = e.target.value; }))}">
     </div>` : ''}
@@ -1051,19 +1183,19 @@ function inspector(ev, sel) {
     ${isText ? `
     <div style="display:flex;gap:10px;flex-wrap:wrap">
       <div class="field" style="gap:6px;flex:1;min-width:140px">
-        <label class="lbl" style="font-size:11.5px;letter-spacing:0">Font chữ</label>
+        <label class="lbl plain">Font chữ</label>
         <select class="inp sm" data-k="sel.font" data-change="${on((e) => edSel((f) => { f.font = e.target.value; }))}">
           ${FONTS.map((v) => `<option${v === sel.font ? ' selected' : ''}>${esc(v)}</option>`).join('')}
         </select>
       </div>
       <div class="field" style="gap:6px;width:90px">
-        <label class="lbl" style="font-size:11.5px;letter-spacing:0">Độ đậm</label>
+        <label class="lbl plain">Độ đậm</label>
         <select class="inp sm" data-k="sel.weight" data-change="${on((e) => edSel((f) => { f.weight = e.target.value; }))}">
           ${WEIGHTS.map((v) => `<option${v === (sel.weight || '400') ? ' selected' : ''}>${v}</option>`).join('')}
         </select>
       </div>
       <div class="field" style="gap:6px;width:70px">
-        <label class="lbl" style="font-size:11.5px;letter-spacing:0">Màu</label>
+        <label class="lbl plain">Màu</label>
         <input type="color" data-k="sel.color" value="${esc(sel.color || '#ffffff')}"
                style="width:100%;height:37px;padding:2px;border-radius:8px;border:1px solid var(--line2);background:#fff;cursor:pointer"
                data-change="${on((e) => edSel((f) => { f.color = e.target.value; }))}">
@@ -1071,21 +1203,21 @@ function inspector(ev, sel) {
     </div>
     <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
       <div class="field" style="gap:6px">
-        <label class="lbl" style="font-size:11.5px;letter-spacing:0">Căn lề</label>
+        <label class="lbl plain">Căn lề</label>
         <div style="display:flex;gap:4px">${alignBtn('left', 'Trái')}${alignBtn('center', 'Giữa')}${alignBtn('right', 'Phải')}</div>
       </div>
       <div class="field" style="gap:6px;width:100px">
-        <label class="lbl" style="font-size:11.5px;letter-spacing:0">Giãn chữ (px)</label>
+        <label class="lbl plain">Giãn chữ (px)</label>
         <input class="inp sm" data-k="sel.ls" value="${esc(sel.ls || 0)}"
                data-change="${on((e) => { const n = parseFloat(e.target.value); edSel((f) => { f.ls = isNaN(n) ? 0 : n; }); })}">
       </div>
       <div class="field" style="gap:6px;width:110px">
-        <label class="lbl" style="font-size:11.5px;letter-spacing:0">Rộng tối đa</label>
+        <label class="lbl plain">Rộng tối đa</label>
         <input class="inp sm" data-k="sel.maxW" value="${esc(sel.maxW || 0)}"
                data-change="${on((e) => { const n = parseInt(e.target.value); edSel((f) => { f.maxW = isNaN(n) ? 0 : n; }); })}">
       </div>
     </div>
-    <label class="chk" style="gap:6px;font-size:12.5px;color:var(--ink)">
+    <label class="chk">
       <input type="checkbox"${sel.upper ? ' checked' : ''} data-change="${on(() => edSel((f) => { f.upper = !f.upper; }))}">VIẾT HOA toàn bộ
     </label>` : ''}
   </div>`;
@@ -1099,16 +1231,32 @@ app.addEventListener('change', (e) => { if (e.target.type === 'file') fire('file
 app.addEventListener('keydown', fire('key'));
 app.addEventListener('pointerdown', fire('down'));
 
-render();
-
-// re-render once webfonts are ready so canvas metrics use the real faces
-Promise.all([
-  '400 20px "Be Vietnam Pro"', '700 20px "Playfair Display"', '800 20px "Playfair Display"',
-  '600 20px "Montserrat"', '700 20px "Montserrat"', '600 20px "Cormorant Garamond"'
-].map((f) => document.fonts.load(f))).then(render).catch(() => {});
-
-// editor placement math depends on the wrapper's measured width
 addEventListener('resize', () => { if (S.view === 'editor') render(); });
+
+(async function boot() {
+  render();
+  try {
+    const r = await api('/api/bootstrap');
+    S.events = r.events;
+    S.selEventId = S.events[0] ? S.events[0].id : '';
+    S.lookupEventId = S.selEventId;
+  } catch (e) {
+    S.bootErr = 'Không kết nối được máy chủ: ' + e.message;
+  }
+  if (token) {
+    try { await loadAdminState(); } catch (e) { setToken(''); }
+  }
+  S.booted = true;
+  S.view = viewForPath(location.pathname);
+  animate = true;
+  render();
+
+  // re-render once webfonts are ready so canvas metrics use the real faces
+  Promise.all([
+    '400 20px "Be Vietnam Pro"', '700 20px "Playfair Display"', '800 20px "Playfair Display"',
+    '600 20px "Montserrat"', '700 20px "Montserrat"', '600 20px "Cormorant Garamond"'
+  ].map((f) => document.fonts.load(f))).then(render).catch(() => {});
+})();
 </script>
 </body>
 </html>
