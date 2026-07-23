@@ -1,0 +1,846 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Playfair+Display:ital,wght@0,600;0,700;0,800;1,600&family=Montserrat:wght@400;500;600;700;800&family=Cormorant+Garamond:ital,wght@0,600;1,600&display=swap&subset=vietnamese" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+<style>
+html,body{margin:0;padding:0;background:#f4f2ee;color:#201d29;font-family:'Be Vietnam Pro',system-ui,sans-serif}
+a{color:#5b3df5;text-decoration:none}a:hover{color:#4930cc;text-decoration:underline}
+*{-webkit-tap-highlight-color:transparent}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+</style>
+</helmet>
+
+<sc-if value="{{ isHome }}" hint-placeholder-val="{{ true }}">
+<div data-screen-label="Trang khách — Tạo thiệp" style="min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:52px 20px 32px;box-sizing:border-box">
+  <div style="display:flex;flex-direction:column;align-items:center;gap:10px;animation:fadeUp .5s ease both">
+    <div style="width:52px;height:52px;border-radius:14px;background:linear-gradient(135deg,#5b3df5,#8a5cf6);display:flex;align-items:center;justify-content:center;color:#fff;font:700 22px 'Playfair Display',serif">T</div>
+    <h1 style="margin:10px 0 0;font:600 clamp(34px,6vw,46px)/1.1 'Playfair Display',serif;font-style:italic;color:#201d29;text-align:center">Tạo thiệp online</h1>
+    <p style="margin:4px 0 0;max-width:440px;text-align:center;color:#766f80;font-size:15px;line-height:1.6">Chọn sự kiện và nhập thông tin của bạn để nhận thiệp mời cá nhân hóa, tải về ngay.</p>
+    <div style="width:120px;height:1px;background:linear-gradient(90deg,transparent,#c9b8f5,transparent);margin:14px 0 6px"></div>
+  </div>
+  <div style="width:100%;max-width:560px;background:#ffffff;border:1px solid rgba(32,29,41,.1);border-radius:16px;box-shadow:0 10px 30px rgba(32,29,41,.06);padding:28px;box-sizing:border-box;margin-top:18px;animation:fadeUp .5s .08s ease both">
+    <div style="font-size:11px;font-weight:700;letter-spacing:.22em;color:#5b3df5;padding-bottom:14px;border-bottom:1px solid rgba(32,29,41,.08);margin-bottom:20px">THÔNG TIN THIỆP ONLINE</div>
+    <div style="display:flex;flex-direction:column;gap:18px">
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <label style="font-size:11px;font-weight:700;letter-spacing:.14em;color:#766f80">SỰ KIỆN THAM GIA</label>
+        <select value="{{ selEventId }}" onChange="{{ onSelEvent }}" style="width:100%;box-sizing:border-box;padding:12px 14px;border-radius:10px;border:1px solid rgba(32,29,41,.18);background:#ffffff;color:#201d29;font:500 15px 'Be Vietnam Pro',sans-serif;outline:none" style-focus="border-color:#5b3df5;box-shadow:0 0 0 3px rgba(91,61,245,.15)">
+          <option value="">— Chọn sự kiện —</option>
+          <sc-for list="{{ eventOptions }}" as="op" hint-placeholder-count="3"><option value="{{ op.id }}">{{ op.name }}</option></sc-for>
+        </select>
+      </div>
+      <sc-for list="{{ formFields }}" as="f" hint-placeholder-count="4">
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <label style="font-size:11px;font-weight:700;letter-spacing:.14em;color:#766f80">{{ f.labelUpper }}</label>
+          <sc-if value="{{ f.isSelect }}" hint-placeholder-val="{{ false }}">
+            <select value="{{ f.value }}" onChange="{{ f.onChange }}" style="width:100%;box-sizing:border-box;padding:12px 14px;border-radius:10px;border:1px solid rgba(32,29,41,.18);background:#ffffff;color:#201d29;font:500 15px 'Be Vietnam Pro',sans-serif;outline:none" style-focus="border-color:#5b3df5;box-shadow:0 0 0 3px rgba(91,61,245,.15)">
+              <option value="">{{ f.label }}</option>
+              <sc-for list="{{ f.options }}" as="o"><option value="{{ o.v }}">{{ o.v }}</option></sc-for>
+            </select>
+          </sc-if>
+          <sc-if value="{{ f.isText }}" hint-placeholder-val="{{ true }}">
+            <input value="{{ f.value }}" onChange="{{ f.onChange }}" placeholder="{{ f.placeholder }}" style="width:100%;box-sizing:border-box;padding:12px 14px;border-radius:10px;border:1px solid rgba(32,29,41,.18);background:#ffffff;color:#201d29;font:500 15px 'Be Vietnam Pro',sans-serif;outline:none" style-focus="border-color:#5b3df5;box-shadow:0 0 0 3px rgba(91,61,245,.15)"></input>
+          </sc-if>
+        </div>
+      </sc-for>
+      <sc-if value="{{ formErr }}" hint-placeholder-val="{{ false }}">
+        <div style="background:rgba(192,57,43,.08);border:1px solid rgba(192,57,43,.25);color:#a93226;border-radius:10px;padding:10px 14px;font-size:13.5px">{{ formErr }}</div>
+      </sc-if>
+      <button onClick="{{ onSubmit }}" style="padding:14px 22px;border-radius:10px;border:none;background:#5b3df5;color:#fff;font:600 15px 'Be Vietnam Pro',sans-serif;cursor:pointer;letter-spacing:.02em" style-hover="background:#4930cc">Tạo thiệp mời</button>
+    </div>
+  </div>
+  <div style="margin-top:auto;padding-top:36px;font-size:13px;color:#a39cae">
+    <a href="#" onClick="{{ gotoAdmin }}" style="color:#766f80">Trang quản trị →</a>
+  </div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isCard }}" hint-placeholder-val="{{ false }}">
+<div data-screen-label="Trang khách — Thiệp thành phẩm" style="min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:36px 16px 40px;box-sizing:border-box">
+  <div style="width:100%;max-width:620px;display:flex;flex-direction:column;gap:16px;animation:fadeUp .5s ease both">
+    <div style="border-radius:14px;overflow:hidden;box-shadow:0 20px 50px rgba(32,29,41,.25);line-height:0">
+      <canvas ref="{{ cardCanvasRef }}" style="width:100%;display:block"></canvas>
+    </div>
+    <div style="display:flex;gap:12px;flex-wrap:wrap">
+      <button onClick="{{ onDownload }}" style="flex:2;min-width:180px;padding:15px 22px;border-radius:10px;border:none;background:linear-gradient(135deg,#f0a23c,#e88b1a);color:#2a1500;font:700 15px 'Be Vietnam Pro',sans-serif;cursor:pointer" style-hover="filter:brightness(1.06)">Tải ảnh về</button>
+      <button onClick="{{ onAgain }}" style="flex:1;min-width:120px;padding:15px 22px;border-radius:10px;border:1px solid rgba(32,29,41,.2);background:#ffffff;color:#201d29;font:600 15px 'Be Vietnam Pro',sans-serif;cursor:pointer" style-hover="background:#f4f2ee">Tạo lại</button>
+    </div>
+    <sc-if value="{{ showJson }}" hint-placeholder-val="{{ false }}">
+      <details style="background:#ffffff;border:1px solid rgba(32,29,41,.1);border-radius:12px;padding:14px 18px">
+        <summary style="cursor:pointer;font-size:13px;font-weight:600;color:#766f80">Xem payload JSON đã lưu</summary>
+        <pre style="margin:12px 0 8px;font-size:11.5px;line-height:1.5;white-space:pre-wrap;word-break:break-all;background:#f7f6f3;border-radius:8px;padding:12px;color:#201d29">{{ cardJson }}</pre>
+        <button onClick="{{ onCopyJson }}" style="padding:8px 14px;border-radius:8px;border:1px solid rgba(32,29,41,.18);background:#fff;font:600 12.5px 'Be Vietnam Pro',sans-serif;cursor:pointer" style-hover="background:#f4f2ee">{{ copyLabel }}</button>
+      </details>
+    </sc-if>
+  </div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isDupe }}" hint-placeholder-val="{{ false }}">
+<div style="position:fixed;inset:0;background:rgba(16,10,32,.62);backdrop-filter:blur(3px);display:flex;align-items:center;justify-content:center;padding:20px;z-index:50">
+  <div style="width:100%;max-width:520px;background:#ffffff;border-radius:16px;padding:26px;box-sizing:border-box;box-shadow:0 30px 80px rgba(0,0,0,.4);animation:fadeUp .25s ease both">
+    <h3 style="margin:0 0 8px;font:700 20px 'Be Vietnam Pro',sans-serif">Tên này đã có trong hệ thống</h3>
+    <p style="margin:0 0 16px;font-size:13.5px;color:#766f80;line-height:1.55">Chọn 1 bản ghi bên dưới để thay thế thông tin, hoặc tạo mới hoàn toàn nếu đây là người/đại lý khác.</p>
+    <div style="display:flex;flex-direction:column;gap:8px;max-height:220px;overflow:auto">
+      <sc-for list="{{ dupeMatches }}" as="m" hint-placeholder-count="1">
+        <label style="display:flex;gap:10px;align-items:flex-start;background:#f7f6f3;border:1px solid rgba(32,29,41,.1);border-radius:10px;padding:12px 14px;cursor:pointer;font-size:13.5px;line-height:1.5" style-hover="border-color:#5b3df5">
+          <input type="checkbox" checked="{{ m.checked }}" onChange="{{ m.onToggle }}" style="margin-top:2px"></input>
+          <span>{{ m.desc }}</span>
+        </label>
+      </sc-for>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:18px;flex-wrap:wrap">
+      <button onClick="{{ onDupeReplace }}" style="flex:1;min-width:110px;padding:12px 16px;border-radius:10px;border:none;background:#b06a2c;color:#fff;font:600 14px 'Be Vietnam Pro',sans-serif;cursor:pointer" style-hover="background:#9a5a22">Thay thế</button>
+      <button onClick="{{ onDupeNew }}" style="flex:1;min-width:110px;padding:12px 16px;border-radius:10px;border:1px solid rgba(32,29,41,.2);background:#fff;font:600 14px 'Be Vietnam Pro',sans-serif;cursor:pointer" style-hover="background:#f4f2ee">Tạo mới</button>
+      <button onClick="{{ onDupeCancel }}" style="flex:1;min-width:110px;padding:12px 16px;border-radius:10px;border:1px solid rgba(32,29,41,.2);background:#fff;font:600 14px 'Be Vietnam Pro',sans-serif;cursor:pointer" style-hover="background:#f4f2ee">Hủy</button>
+    </div>
+  </div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isLogin }}" hint-placeholder-val="{{ false }}">
+<div data-screen-label="Admin — Đăng nhập" style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;box-sizing:border-box">
+  <div style="width:100%;max-width:380px;background:#ffffff;border:1px solid rgba(32,29,41,.1);border-radius:16px;box-shadow:0 10px 30px rgba(32,29,41,.06);padding:30px;box-sizing:border-box;animation:fadeUp .4s ease both">
+    <div style="width:44px;height:44px;border-radius:12px;background:#201d29;display:flex;align-items:center;justify-content:center;color:#fff;font:700 18px 'Playfair Display',serif;margin-bottom:14px">A</div>
+    <h2 style="margin:0 0 4px;font:700 20px 'Be Vietnam Pro',sans-serif">Trang quản trị</h2>
+    <p style="margin:0 0 18px;font-size:13px;color:#766f80">Đăng nhập demo — mật khẩu: <code style="background:#f4f2ee;padding:2px 6px;border-radius:5px">admin</code></p>
+    <input type="password" value="{{ loginVal }}" onChange="{{ onLoginChange }}" onKeyDown="{{ onLoginKey }}" placeholder="Mật khẩu" style="width:100%;box-sizing:border-box;padding:12px 14px;border-radius:10px;border:1px solid rgba(32,29,41,.18);background:#ffffff;font:500 15px 'Be Vietnam Pro',sans-serif;outline:none" style-focus="border-color:#5b3df5;box-shadow:0 0 0 3px rgba(91,61,245,.15)"></input>
+    <sc-if value="{{ loginErr }}" hint-placeholder-val="{{ false }}"><div style="color:#a93226;font-size:13px;margin-top:8px">Mật khẩu chưa đúng.</div></sc-if>
+    <button onClick="{{ onLoginSubmit }}" style="width:100%;margin-top:14px;padding:13px;border-radius:10px;border:none;background:#5b3df5;color:#fff;font:600 15px 'Be Vietnam Pro',sans-serif;cursor:pointer" style-hover="background:#4930cc">Đăng nhập</button>
+    <div style="margin-top:16px;text-align:center"><a href="#" onClick="{{ gotoHome }}" style="font-size:13px;color:#766f80">← Về trang khách</a></div>
+  </div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isAdmin }}" hint-placeholder-val="{{ false }}">
+<div data-screen-label="Admin — Bảng điều khiển" style="min-height:100vh;box-sizing:border-box">
+  <div style="background:#ffffff;border-bottom:1px solid rgba(32,29,41,.1);padding:14px 22px;display:flex;align-items:center;gap:18px;flex-wrap:wrap;position:sticky;top:0;z-index:10">
+    <div style="display:flex;align-items:center;gap:10px;font:700 16px 'Be Vietnam Pro',sans-serif"><span style="width:30px;height:30px;border-radius:8px;background:#201d29;color:#fff;display:inline-flex;align-items:center;justify-content:center;font:700 13px 'Playfair Display',serif">A</span>Quản trị thiệp sự kiện</div>
+    <div style="display:flex;gap:4px;background:#f4f2ee;border-radius:10px;padding:4px">
+      <button onClick="{{ onTabEvents }}" style="padding:8px 16px;border-radius:8px;border:none;cursor:pointer;font:600 13.5px 'Be Vietnam Pro',sans-serif;background:{{ tabEventsBg }};color:{{ tabEventsColor }}">Sự kiện</button>
+      <button onClick="{{ onTabGuests }}" style="padding:8px 16px;border-radius:8px;border:none;cursor:pointer;font:600 13.5px 'Be Vietnam Pro',sans-serif;background:{{ tabGuestsBg }};color:{{ tabGuestsColor }}">Khách ({{ guestCount }})</button>
+      <button onClick="{{ onTabWebhook }}" style="padding:8px 16px;border-radius:8px;border:none;cursor:pointer;font:600 13.5px 'Be Vietnam Pro',sans-serif;background:{{ tabWebhookBg }};color:{{ tabWebhookColor }}">Webhook API</button>
+    </div>
+    <div style="margin-left:auto;display:flex;gap:14px;align-items:center">
+      <a href="#" onClick="{{ gotoHome }}" style="font-size:13px">Xem trang khách</a>
+      <button onClick="{{ onLogout }}" style="padding:8px 14px;border-radius:8px;border:1px solid rgba(32,29,41,.18);background:#fff;font:600 13px 'Be Vietnam Pro',sans-serif;cursor:pointer" style-hover="background:#f4f2ee">Đăng xuất</button>
+    </div>
+  </div>
+
+  <div style="max-width:1080px;margin:0 auto;padding:26px 22px 60px;box-sizing:border-box">
+    <sc-if value="{{ tabEvents }}" hint-placeholder-val="{{ true }}">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;gap:12px;flex-wrap:wrap">
+        <div><h2 style="margin:0;font:700 20px 'Be Vietnam Pro',sans-serif">Sự kiện &amp; mẫu thiệp</h2><p style="margin:4px 0 0;font-size:13px;color:#766f80">Mỗi sự kiện là một mẫu thiệp. Bấm "Sửa thiết kế" để kéo-thả vị trí các trường trên ảnh.</p></div>
+        <button onClick="{{ onAddEvent }}" style="padding:11px 18px;border-radius:10px;border:none;background:#5b3df5;color:#fff;font:600 14px 'Be Vietnam Pro',sans-serif;cursor:pointer" style-hover="background:#4930cc">+ Thêm sự kiện</button>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px">
+        <sc-for list="{{ adminEvents }}" as="ev" hint-placeholder-count="3">
+          <div style="background:#ffffff;border:1px solid rgba(32,29,41,.1);border-radius:14px;overflow:hidden;display:flex;flex-direction:column">
+            <div style="height:88px;background:{{ ev.swatch }};position:relative"><span style="position:absolute;left:14px;bottom:10px;color:#fff;font:600 11px 'Be Vietnam Pro',sans-serif;letter-spacing:.1em;opacity:.85">{{ ev.dims }}</span></div>
+            <div style="padding:16px;display:flex;flex-direction:column;gap:10px;flex:1">
+              <div style="font:600 14.5px/1.4 'Be Vietnam Pro',sans-serif">{{ ev.name }}</div>
+              <div style="font-size:12.5px;color:#766f80">{{ ev.meta }}</div>
+              <div style="display:flex;gap:8px;margin-top:auto;flex-wrap:wrap">
+                <button onClick="{{ ev.onEdit }}" style="flex:1;padding:9px 12px;border-radius:8px;border:none;background:#201d29;color:#fff;font:600 12.5px 'Be Vietnam Pro',sans-serif;cursor:pointer" style-hover="background:#3a3547">Sửa thiết kế</button>
+                <button onClick="{{ ev.onRename }}" style="padding:9px 12px;border-radius:8px;border:1px solid rgba(32,29,41,.18);background:#fff;font:600 12.5px 'Be Vietnam Pro',sans-serif;cursor:pointer" style-hover="background:#f4f2ee">Đổi tên</button>
+                <button onClick="{{ ev.onDel }}" style="padding:9px 12px;border-radius:8px;border:1px solid rgba(192,57,43,.3);background:#fff;color:#a93226;font:600 12.5px 'Be Vietnam Pro',sans-serif;cursor:pointer" style-hover="background:rgba(192,57,43,.06)">Xóa</button>
+              </div>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ tabGuests }}" hint-placeholder-val="{{ false }}">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;gap:12px;flex-wrap:wrap">
+        <div><h2 style="margin:0;font:700 20px 'Be Vietnam Pro',sans-serif">Dữ liệu khách đã tạo thiệp</h2><p style="margin:4px 0 0;font-size:13px;color:#766f80">Payload JSON lưu trên trình duyệt này (localStorage), sẵn sàng bắn về API bên thứ 3.</p></div>
+        <button onClick="{{ onExportAll }}" style="padding:11px 18px;border-radius:10px;border:1px solid rgba(32,29,41,.18);background:#fff;font:600 14px 'Be Vietnam Pro',sans-serif;cursor:pointer" style-hover="background:#f4f2ee">Tải toàn bộ JSON</button>
+      </div>
+      <sc-if value="{{ guestsEmpty }}" hint-placeholder-val="{{ false }}">
+        <div style="background:#ffffff;border:1px dashed rgba(32,29,41,.2);border-radius:14px;padding:40px;text-align:center;color:#766f80;font-size:14px">Chưa có khách nào tạo thiệp. Sang <a href="#" onClick="{{ gotoHome }}">trang khách</a> để thử.</div>
+      </sc-if>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <sc-for list="{{ guests }}" as="g" hint-placeholder-count="3">
+          <div onClick="{{ g.onView }}" style="background:#ffffff;border:1px solid rgba(32,29,41,.1);border-radius:12px;padding:14px 18px;display:flex;gap:14px;align-items:center;cursor:pointer;flex-wrap:wrap" style-hover="border-color:#5b3df5">
+            <div style="font:600 14px 'Be Vietnam Pro',sans-serif;min-width:180px">{{ g.name }}</div>
+            <div style="font-size:12.5px;color:#766f80;flex:1;min-width:160px">{{ g.eventName }}</div>
+            <div style="font-size:12px;color:#a39cae">{{ g.time }}</div>
+            <div style="font-size:12px;color:#5b3df5;font-weight:600">Xem JSON →</div>
+          </div>
+        </sc-for>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ tabWebhook }}" hint-placeholder-val="{{ false }}">
+      <div style="max-width:640px">
+        <h2 style="margin:0 0 4px;font:700 20px 'Be Vietnam Pro',sans-serif">Webhook — bắn dữ liệu về bên thứ 3</h2>
+        <p style="margin:0 0 18px;font-size:13px;color:#766f80;line-height:1.6">Mỗi khi khách tạo thiệp, payload JSON sẽ được POST tới URL bên dưới. Lưu ý: gửi trực tiếp từ trình duyệt nên endpoint cần cho phép CORS; bản chạy thật nên gửi qua server trung gian.</p>
+        <div style="background:#ffffff;border:1px solid rgba(32,29,41,.1);border-radius:14px;padding:22px;display:flex;flex-direction:column;gap:14px">
+          <label style="font-size:11px;font-weight:700;letter-spacing:.14em;color:#766f80">URL WEBHOOK (POST, JSON)</label>
+          <input value="{{ webhookUrl }}" onChange="{{ onWebhookChange }}" placeholder="https://api.example.com/hooks/guests" style="width:100%;box-sizing:border-box;padding:12px 14px;border-radius:10px;border:1px solid rgba(32,29,41,.18);font:500 14px 'Be Vietnam Pro',sans-serif;outline:none" style-focus="border-color:#5b3df5;box-shadow:0 0 0 3px rgba(91,61,245,.15)"></input>
+          <div style="display:flex;gap:10px;flex-wrap:wrap">
+            <button onClick="{{ onSaveWebhook }}" style="padding:11px 18px;border-radius:10px;border:none;background:#5b3df5;color:#fff;font:600 14px 'Be Vietnam Pro',sans-serif;cursor:pointer" style-hover="background:#4930cc">Lưu cấu hình</button>
+            <button onClick="{{ onTestWebhook }}" style="padding:11px 18px;border-radius:10px;border:1px solid rgba(32,29,41,.18);background:#fff;font:600 14px 'Be Vietnam Pro',sans-serif;cursor:pointer" style-hover="background:#f4f2ee">Gửi thử payload mẫu</button>
+          </div>
+          <sc-if value="{{ webhookMsg }}" hint-placeholder-val="{{ false }}"><div style="font-size:13px;color:#201d29;background:#f4f2ee;border-radius:8px;padding:10px 14px">{{ webhookMsg }}</div></sc-if>
+        </div>
+        <h3 style="margin:26px 0 10px;font:700 15px 'Be Vietnam Pro',sans-serif">Lịch sử gửi</h3>
+        <sc-if value="{{ logsEmpty }}" hint-placeholder-val="{{ true }}"><div style="font-size:13px;color:#a39cae">Chưa có lần gửi nào.</div></sc-if>
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <sc-for list="{{ webhookLogs }}" as="lg" hint-placeholder-count="0">
+            <div style="font:12.5px ui-monospace,Menlo,monospace;background:#ffffff;border:1px solid rgba(32,29,41,.08);border-radius:8px;padding:9px 14px;color:{{ lg.color }}">{{ lg.line }}</div>
+          </sc-for>
+        </div>
+      </div>
+    </sc-if>
+  </div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isGuestModal }}" hint-placeholder-val="{{ false }}">
+<div style="position:fixed;inset:0;background:rgba(16,10,32,.62);display:flex;align-items:center;justify-content:center;padding:20px;z-index:60">
+  <div style="width:100%;max-width:560px;max-height:86vh;overflow:auto;background:#ffffff;border-radius:16px;padding:24px;box-sizing:border-box;box-shadow:0 30px 80px rgba(0,0,0,.4)">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px"><h3 style="margin:0;font:700 17px 'Be Vietnam Pro',sans-serif">Payload JSON</h3><button onClick="{{ onCloseGuest }}" style="border:none;background:#f4f2ee;border-radius:8px;padding:6px 12px;cursor:pointer;font:600 13px 'Be Vietnam Pro',sans-serif">Đóng ✕</button></div>
+    <pre style="margin:0 0 14px;font-size:11.5px;line-height:1.55;white-space:pre-wrap;word-break:break-all;background:#f7f6f3;border-radius:10px;padding:14px">{{ guestJson }}</pre>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button onClick="{{ onCopyGuest }}" style="padding:10px 14px;border-radius:8px;border:1px solid rgba(32,29,41,.18);background:#fff;font:600 13px 'Be Vietnam Pro',sans-serif;cursor:pointer" style-hover="background:#f4f2ee">{{ copyLabel }}</button>
+      <button onClick="{{ onDownloadGuest }}" style="padding:10px 14px;border-radius:8px;border:1px solid rgba(32,29,41,.18);background:#fff;font:600 13px 'Be Vietnam Pro',sans-serif;cursor:pointer" style-hover="background:#f4f2ee">Tải .json</button>
+      <button onClick="{{ onResend }}" style="padding:10px 14px;border-radius:8px;border:none;background:#5b3df5;color:#fff;font:600 13px 'Be Vietnam Pro',sans-serif;cursor:pointer" style-hover="background:#4930cc">Gửi webhook</button>
+      <button onClick="{{ onDeleteGuest }}" style="padding:10px 14px;border-radius:8px;border:1px solid rgba(192,57,43,.3);color:#a93226;background:#fff;font:600 13px 'Be Vietnam Pro',sans-serif;cursor:pointer" style-hover="background:rgba(192,57,43,.06)">Xóa bản ghi</button>
+    </div>
+    <sc-if value="{{ resendMsg }}" hint-placeholder-val="{{ false }}"><div style="margin-top:10px;font-size:13px;background:#f4f2ee;border-radius:8px;padding:9px 12px">{{ resendMsg }}</div></sc-if>
+  </div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isEditor }}" hint-placeholder-val="{{ false }}">
+<div data-screen-label="Admin — Trình thiết kế thiệp" style="min-height:100vh;box-sizing:border-box">
+  <div style="background:#ffffff;border-bottom:1px solid rgba(32,29,41,.1);padding:12px 22px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;position:sticky;top:0;z-index:10">
+    <button onClick="{{ onEdCancel }}" style="padding:9px 14px;border-radius:8px;border:1px solid rgba(32,29,41,.18);background:#fff;font:600 13px 'Be Vietnam Pro',sans-serif;cursor:pointer" style-hover="background:#f4f2ee">← Hủy</button>
+    <input value="{{ edName }}" onChange="{{ onEdName }}" style="flex:1;min-width:200px;padding:10px 14px;border-radius:8px;border:1px solid rgba(32,29,41,.14);font:600 14.5px 'Be Vietnam Pro',sans-serif;outline:none" style-focus="border-color:#5b3df5"></input>
+    <button onClick="{{ onEdSave }}" style="padding:10px 20px;border-radius:8px;border:none;background:#5b3df5;color:#fff;font:600 14px 'Be Vietnam Pro',sans-serif;cursor:pointer" style-hover="background:#4930cc">Lưu template</button>
+  </div>
+  <div style="display:flex;gap:22px;padding:22px;flex-wrap:wrap;align-items:flex-start;max-width:1180px;margin:0 auto;box-sizing:border-box">
+    <div style="flex:1.3;min-width:300px">
+      <div style="font-size:12px;color:#766f80;margin-bottom:10px">Kéo-thả các thành phần trực tiếp trên thiệp. Bấm vào thành phần để chỉnh thuộc tính.</div>
+      <div ref="{{ edWrapRef }}" style="position:relative;width:100%;max-width:560px;border-radius:12px;overflow:hidden;box-shadow:0 16px 40px rgba(32,29,41,.2);touch-action:none;user-select:none;line-height:0">
+        <canvas ref="{{ edCanvasRef }}" style="width:100%;display:block"></canvas>
+        <sc-for list="{{ edPlacements }}" as="p" hint-placeholder-count="5">
+          <div onPointerDown="{{ p.onDown }}" style="{{ p.style }}">
+            <sc-if value="{{ p.isQr }}" hint-placeholder-val="{{ false }}"><div style="{{ p.qrStyle }}">QR</div></sc-if>
+            <sc-if value="{{ p.isText }}" hint-placeholder-val="{{ true }}">{{ p.display }}</sc-if>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+    <div style="flex:1;min-width:300px;max-width:420px;display:flex;flex-direction:column;gap:16px">
+      <div style="background:#ffffff;border:1px solid rgba(32,29,41,.1);border-radius:14px;padding:18px;display:flex;flex-direction:column;gap:12px">
+        <div style="font:700 13px 'Be Vietnam Pro',sans-serif;letter-spacing:.06em;color:#766f80">ẢNH NỀN THIỆP</div>
+        <div style="font-size:12.5px;color:#766f80;line-height:1.5">Tải lên ảnh thiết kế sẵn (PNG/JPG) đã chừa trống vị trí. Chưa có ảnh thì dùng nền demo.</div>
+        <input type="file" accept="image/*" onChange="{{ onBgUpload }}" style="font-size:12.5px"></input>
+        <sc-if value="{{ hasBg }}" hint-placeholder-val="{{ false }}"><button onClick="{{ onBgRemove }}" style="align-self:flex-start;padding:8px 12px;border-radius:8px;border:1px solid rgba(192,57,43,.3);color:#a93226;background:#fff;font:600 12px 'Be Vietnam Pro',sans-serif;cursor:pointer">Bỏ ảnh nền (về nền demo)</button></sc-if>
+        <div style="display:flex;gap:10px;align-items:center">
+          <label style="font-size:12px;color:#766f80">Khổ thiệp:</label>
+          <input value="{{ edW }}" onChange="{{ onEdW }}" style="width:70px;padding:8px;border-radius:8px;border:1px solid rgba(32,29,41,.18);font:500 13px 'Be Vietnam Pro',sans-serif;outline:none"></input>
+          <span style="color:#a39cae">×</span>
+          <input value="{{ edH }}" onChange="{{ onEdH }}" style="width:70px;padding:8px;border-radius:8px;border:1px solid rgba(32,29,41,.18);font:500 13px 'Be Vietnam Pro',sans-serif;outline:none"></input>
+          <span style="font-size:12px;color:#a39cae">px</span>
+        </div>
+      </div>
+
+      <div style="background:#ffffff;border:1px solid rgba(32,29,41,.1);border-radius:14px;padding:18px;display:flex;flex-direction:column;gap:10px">
+        <div style="font:700 13px 'Be Vietnam Pro',sans-serif;letter-spacing:.06em;color:#766f80">TRƯỜNG KHÁCH NHẬP</div>
+        <sc-for list="{{ edInputs }}" as="i" hint-placeholder-count="4">
+          <div style="border:1px solid rgba(32,29,41,.1);border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:8px">
+            <div style="display:flex;gap:8px;align-items:center">
+              <input value="{{ i.label }}" onChange="{{ i.onLabel }}" style="flex:1;padding:7px 10px;border-radius:7px;border:1px solid rgba(32,29,41,.14);font:600 12.5px 'Be Vietnam Pro',sans-serif;outline:none"></input>
+              <button onClick="{{ i.onRemove }}" style="border:none;background:none;color:#a93226;cursor:pointer;font-size:15px;padding:2px 6px">✕</button>
+            </div>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:11.5px;color:#766f80">
+              <span style="font:11px ui-monospace,monospace;background:#f4f2ee;padding:2px 7px;border-radius:5px">{{ i.key }}</span>
+              <label style="display:flex;gap:4px;align-items:center;cursor:pointer"><input type="checkbox" checked="{{ i.isSelect }}" onChange="{{ i.onType }}"></input>Chọn từ danh sách</label>
+              <label style="display:flex;gap:4px;align-items:center;cursor:pointer"><input type="checkbox" checked="{{ i.required }}" onChange="{{ i.onRequired }}"></input>Bắt buộc</label>
+            </div>
+            <sc-if value="{{ i.isSelect }}" hint-placeholder-val="{{ false }}">
+              <input value="{{ i.options }}" onChange="{{ i.onOptions }}" placeholder="Các lựa chọn, cách nhau dấu phẩy" style="padding:7px 10px;border-radius:7px;border:1px solid rgba(32,29,41,.14);font:500 12px 'Be Vietnam Pro',sans-serif;outline:none"></input>
+            </sc-if>
+            <sc-if value="{{ i.isText }}" hint-placeholder-val="{{ true }}">
+              <input value="{{ i.placeholder }}" onChange="{{ i.onPlaceholder }}" placeholder="Gợi ý trong ô nhập (placeholder)" style="padding:7px 10px;border-radius:7px;border:1px solid rgba(32,29,41,.14);font:500 12px 'Be Vietnam Pro',sans-serif;outline:none"></input>
+            </sc-if>
+          </div>
+        </sc-for>
+        <button onClick="{{ onAddInput }}" style="align-self:flex-start;padding:9px 14px;border-radius:8px;border:1px dashed rgba(32,29,41,.3);background:#fff;font:600 12.5px 'Be Vietnam Pro',sans-serif;cursor:pointer" style-hover="border-color:#5b3df5;color:#5b3df5">+ Thêm trường nhập</button>
+      </div>
+
+      <div style="background:#ffffff;border:1px solid rgba(32,29,41,.1);border-radius:14px;padding:18px;display:flex;flex-direction:column;gap:10px">
+        <div style="font:700 13px 'Be Vietnam Pro',sans-serif;letter-spacing:.06em;color:#766f80">THÀNH PHẦN TRÊN THIỆP</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button onClick="{{ onAddBind }}" style="padding:8px 12px;border-radius:8px;border:1px solid rgba(32,29,41,.18);background:#fff;font:600 12px 'Be Vietnam Pro',sans-serif;cursor:pointer" style-hover="background:#f4f2ee">+ Dữ liệu khách</button>
+          <button onClick="{{ onAddStatic }}" style="padding:8px 12px;border-radius:8px;border:1px solid rgba(32,29,41,.18);background:#fff;font:600 12px 'Be Vietnam Pro',sans-serif;cursor:pointer" style-hover="background:#f4f2ee">+ Chữ tĩnh</button>
+          <button onClick="{{ onAddQr }}" style="padding:8px 12px;border-radius:8px;border:1px solid rgba(32,29,41,.18);background:#fff;font:600 12px 'Be Vietnam Pro',sans-serif;cursor:pointer" style-hover="background:#f4f2ee">+ QR check-in</button>
+          <button onClick="{{ onAddLucky }}" style="padding:8px 12px;border-radius:8px;border:1px solid rgba(32,29,41,.18);background:#fff;font:600 12px 'Be Vietnam Pro',sans-serif;cursor:pointer" style-hover="background:#f4f2ee">+ Lucky Number</button>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:5px;max-height:180px;overflow:auto">
+          <sc-for list="{{ edPlaceList }}" as="pl" hint-placeholder-count="5">
+            <div onClick="{{ pl.onSel }}" style="display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:8px;cursor:pointer;font-size:12.5px;background:{{ pl.bg }};border:1px solid {{ pl.bd }}">
+              <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ pl.name }}</span>
+              <button onClick="{{ pl.onRemove }}" style="border:none;background:none;color:#a93226;cursor:pointer;font-size:13px">✕</button>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+
+      <sc-if value="{{ hasSel }}" hint-placeholder-val="{{ false }}">
+        <div style="background:#ffffff;border:2px solid #5b3df5;border-radius:14px;padding:18px;display:flex;flex-direction:column;gap:12px">
+          <div style="font:700 13px 'Be Vietnam Pro',sans-serif;letter-spacing:.06em;color:#5b3df5">THUỘC TÍNH — {{ selName }}</div>
+          <sc-if value="{{ selIsBind }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;flex-direction:column;gap:6px"><label style="font-size:11.5px;color:#766f80;font-weight:600">Nguồn dữ liệu</label>
+              <select value="{{ selBind }}" onChange="{{ onSelBind }}" style="padding:9px 12px;border-radius:8px;border:1px solid rgba(32,29,41,.18);font:500 13px 'Be Vietnam Pro',sans-serif;outline:none">
+                <sc-for list="{{ bindOptions }}" as="b"><option value="{{ b.v }}">{{ b.label }}</option></sc-for>
+              </select>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:6px"><label style="font-size:11.5px;color:#766f80;font-weight:600">Chữ đứng trước (prefix)</label>
+              <input value="{{ selPrefix }}" onChange="{{ onSelPrefix }}" style="padding:9px 12px;border-radius:8px;border:1px solid rgba(32,29,41,.18);font:500 13px 'Be Vietnam Pro',sans-serif;outline:none"></input>
+            </div>
+          </sc-if>
+          <sc-if value="{{ selIsStatic }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;flex-direction:column;gap:6px"><label style="font-size:11.5px;color:#766f80;font-weight:600">Nội dung chữ</label>
+              <input value="{{ selText }}" onChange="{{ onSelText }}" style="padding:9px 12px;border-radius:8px;border:1px solid rgba(32,29,41,.18);font:500 13px 'Be Vietnam Pro',sans-serif;outline:none"></input>
+            </div>
+          </sc-if>
+          <div style="display:flex;gap:10px;flex-wrap:wrap">
+            <div style="display:flex;flex-direction:column;gap:6px;width:86px"><label style="font-size:11.5px;color:#766f80;font-weight:600">X</label><input value="{{ selX }}" onChange="{{ onSelX }}" style="padding:8px 10px;border-radius:8px;border:1px solid rgba(32,29,41,.18);font:500 13px 'Be Vietnam Pro',sans-serif;outline:none"></input></div>
+            <div style="display:flex;flex-direction:column;gap:6px;width:86px"><label style="font-size:11.5px;color:#766f80;font-weight:600">Y</label><input value="{{ selY }}" onChange="{{ onSelY }}" style="padding:8px 10px;border-radius:8px;border:1px solid rgba(32,29,41,.18);font:500 13px 'Be Vietnam Pro',sans-serif;outline:none"></input></div>
+            <div style="display:flex;flex-direction:column;gap:6px;width:86px"><label style="font-size:11.5px;color:#766f80;font-weight:600">{{ selSizeLabel }}</label><input value="{{ selSize }}" onChange="{{ onSelSize }}" style="padding:8px 10px;border-radius:8px;border:1px solid rgba(32,29,41,.18);font:500 13px 'Be Vietnam Pro',sans-serif;outline:none"></input></div>
+          </div>
+          <sc-if value="{{ selIsText }}" hint-placeholder-val="{{ true }}">
+            <div style="display:flex;gap:10px;flex-wrap:wrap">
+              <div style="display:flex;flex-direction:column;gap:6px;flex:1;min-width:140px"><label style="font-size:11.5px;color:#766f80;font-weight:600">Font chữ</label>
+                <select value="{{ selFont }}" onChange="{{ onSelFont }}" style="padding:9px 12px;border-radius:8px;border:1px solid rgba(32,29,41,.18);font:500 13px 'Be Vietnam Pro',sans-serif;outline:none">
+                  <sc-for list="{{ fontOptions }}" as="fo"><option value="{{ fo.v }}">{{ fo.v }}</option></sc-for>
+                </select>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:6px;width:90px"><label style="font-size:11.5px;color:#766f80;font-weight:600">Độ đậm</label>
+                <select value="{{ selWeight }}" onChange="{{ onSelWeight }}" style="padding:9px 12px;border-radius:8px;border:1px solid rgba(32,29,41,.18);font:500 13px 'Be Vietnam Pro',sans-serif;outline:none">
+                  <sc-for list="{{ weightOptions }}" as="wo"><option value="{{ wo.v }}">{{ wo.v }}</option></sc-for>
+                </select>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:6px;width:70px"><label style="font-size:11.5px;color:#766f80;font-weight:600">Màu</label><input type="color" value="{{ selColor }}" onChange="{{ onSelColor }}" style="width:100%;height:37px;padding:2px;border-radius:8px;border:1px solid rgba(32,29,41,.18);background:#fff;cursor:pointer"></input></div>
+            </div>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
+              <div style="display:flex;flex-direction:column;gap:6px"><label style="font-size:11.5px;color:#766f80;font-weight:600">Căn lề</label>
+                <div style="display:flex;gap:4px">
+                  <button onClick="{{ onAlignL }}" style="padding:8px 12px;border-radius:8px;border:1px solid rgba(32,29,41,.18);cursor:pointer;font:600 12px 'Be Vietnam Pro',sans-serif;background:{{ alignLBg }};color:{{ alignLColor }}">Trái</button>
+                  <button onClick="{{ onAlignC }}" style="padding:8px 12px;border-radius:8px;border:1px solid rgba(32,29,41,.18);cursor:pointer;font:600 12px 'Be Vietnam Pro',sans-serif;background:{{ alignCBg }};color:{{ alignCColor }}">Giữa</button>
+                  <button onClick="{{ onAlignR }}" style="padding:8px 12px;border-radius:8px;border:1px solid rgba(32,29,41,.18);cursor:pointer;font:600 12px 'Be Vietnam Pro',sans-serif;background:{{ alignRBg }};color:{{ alignRColor }}">Phải</button>
+                </div>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:6px;width:100px"><label style="font-size:11.5px;color:#766f80;font-weight:600">Giãn chữ (px)</label><input value="{{ selLS }}" onChange="{{ onSelLS }}" style="padding:8px 10px;border-radius:8px;border:1px solid rgba(32,29,41,.18);font:500 13px 'Be Vietnam Pro',sans-serif;outline:none"></input></div>
+              <div style="display:flex;flex-direction:column;gap:6px;width:110px"><label style="font-size:11.5px;color:#766f80;font-weight:600">Rộng tối đa</label><input value="{{ selMaxW }}" onChange="{{ onSelMaxW }}" style="padding:8px 10px;border-radius:8px;border:1px solid rgba(32,29,41,.18);font:500 13px 'Be Vietnam Pro',sans-serif;outline:none"></input></div>
+            </div>
+            <label style="display:flex;gap:6px;align-items:center;font-size:12.5px;color:#201d29;cursor:pointer"><input type="checkbox" checked="{{ selUpper }}" onChange="{{ onSelUpper }}"></input>VIẾT HOA toàn bộ</label>
+          </sc-if>
+        </div>
+      </sc-if>
+    </div>
+  </div>
+</div>
+</sc-if>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;adminPassword&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;admin&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Quản trị&quot;},&quot;showJsonOnCard&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Trang khách&quot;}}">
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    const events = this.load('ecard.events') || this.seedEvents();
+    this.state = {
+      view: 'home', events,
+      guests: this.load('ecard.guests') || [],
+      webhook: this.load('ecard.webhook') || { url: '', logs: [] },
+      selEventId: events[0] ? events[0].id : '', formValues: {}, formErr: '',
+      dupe: null, card: null, copyLabel: 'Copy JSON',
+      loginVal: '', loginErr: false, adminTab: 'events',
+      viewGuest: null, resendMsg: '', webhookMsg: '', webhookDraft: null,
+      editor: null
+    };
+    this._imgs = {};
+  }
+  uid() { return Math.random().toString(36).slice(2, 10); }
+  load(k) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : null; } catch (e) { return null; } }
+  save(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch (e) { alert('Không lưu được (bộ nhớ trình duyệt đầy). Thử dùng ảnh nền nhỏ hơn.'); return false; } }
+  hash(s) { let h = 0; for (let i = 0; i < s.length; i++) { h = (h * 31 + s.charCodeAt(i)) | 0; } return Math.abs(h); }
+
+  defaultInputs() {
+    return [
+      { key: 'title', label: 'Danh xưng', type: 'select', options: ['Ông', 'Bà'], required: true, placeholder: '' },
+      { key: 'name', label: 'Họ và tên', type: 'text', placeholder: 'VD: NGUYỄN VĂN A', required: true },
+      { key: 'phone', label: 'Số điện thoại (5 số cuối)', type: 'text', placeholder: 'VD: 5 số cuối là 12345', required: true },
+      { key: 'position', label: 'Chức danh', type: 'text', placeholder: 'VD: GIÁM ĐỐC KINH DOANH', required: false },
+      { key: 'company', label: 'Tên công ty / Đại lý', type: 'text', placeholder: 'VD: NAM VIỆT GROUP', required: false }
+    ];
+  }
+  seedEvents() {
+    const mk = (name, theme, title, date, venue) => ({
+      id: this.uid(), name, w: 1080, h: 1350, bg: null, theme,
+      inputs: this.defaultInputs(),
+      fields: [
+        { id: this.uid(), type: 'static', text: 'TRÂN TRỌNG KÍNH MỜI', x: 540, y: 200, size: 28, font: 'Montserrat', weight: '600', color: theme.gold, align: 'center', upper: false, ls: 8, maxW: 0 },
+        { id: this.uid(), type: 'bind', bind: 'fullNameDisplay', prefix: '', x: 540, y: 285, size: 58, font: 'Playfair Display', weight: '700', color: '#ffffff', align: 'center', upper: true, ls: 1, maxW: 940 },
+        { id: this.uid(), type: 'bind', bind: 'position', prefix: '', x: 540, y: 345, size: 26, font: 'Montserrat', weight: '600', color: theme.gold, align: 'center', upper: true, ls: 3, maxW: 900 },
+        { id: this.uid(), type: 'bind', bind: 'company', prefix: '', x: 540, y: 398, size: 29, font: 'Montserrat', weight: '500', color: theme.soft, align: 'center', upper: true, ls: 1, maxW: 960 },
+        { id: this.uid(), type: 'static', text: 'tới tham dự sự kiện', x: 540, y: 465, size: 26, font: 'Cormorant Garamond', weight: '600', color: theme.soft, align: 'center', upper: false, ls: 2, maxW: 0 },
+        { id: this.uid(), type: 'static', text: title, x: 540, y: 575, size: 50, font: 'Playfair Display', weight: '800', color: theme.gold, align: 'center', upper: true, ls: 1, maxW: 980 },
+        { id: this.uid(), type: 'static', text: date, x: 540, y: 655, size: 30, font: 'Montserrat', weight: '700', color: '#ffffff', align: 'center', upper: false, ls: 1, maxW: 0 },
+        { id: this.uid(), type: 'static', text: venue, x: 540, y: 703, size: 24, font: 'Montserrat', weight: '500', color: theme.soft, align: 'center', upper: false, ls: 1, maxW: 960 },
+        { id: this.uid(), type: 'static', text: 'Rất hân hạnh được đón tiếp!', x: 540, y: 905, size: 30, font: 'Cormorant Garamond', weight: '600', color: theme.gold, align: 'center', upper: false, ls: 0, maxW: 0 },
+        { id: this.uid(), type: 'bind', bind: 'lucky', prefix: 'Lucky Number: ', x: 540, y: 960, size: 33, font: 'Montserrat', weight: '700', color: '#ffffff', align: 'center', upper: false, ls: 1, maxW: 0 },
+        { id: this.uid(), type: 'qr', x: 540, y: 1010, size: 230 },
+        { id: this.uid(), type: 'static', text: 'MÃ QR ĐỂ CHECK-IN', x: 540, y: 1295, size: 20, font: 'Montserrat', weight: '600', color: theme.soft, align: 'center', upper: false, ls: 4, maxW: 0 }
+      ]
+    });
+    const evs = [
+      mk('SỰ KIỆN KICK-OFF DỰ ÁN THÁP VÀNG RIVERSIDE', { c1: '#2b1657', c2: '#120a2e', glow: 'rgba(147,88,255,.45)', gold: '#e9c88f', soft: '#d9cff0' }, 'KHAI MỞ TỌA ĐỘ TƯƠNG LAI', '30.07.2026  |  08:00 - Thứ Năm', 'TẦNG 5 – GEM CENTER, TP. HỒ CHÍ MINH'),
+      mk('GALA DINNER TRI ÂN ĐỐI TÁC 2026', { c1: '#0e2148', c2: '#050b18', glow: 'rgba(64,120,255,.35)', gold: '#f0d9a0', soft: '#c6d4f2' }, 'ĐÊM TRI ÂN – KẾT NỐI THỊNH VƯỢNG', '12.09.2026  |  18:00 - Thứ Bảy', 'BALLROOM A – REX HOTEL, TP. HỒ CHÍ MINH'),
+      mk('LỄ RA MẮT SẢN PHẨM AURORA', { c1: '#0b3d35', c2: '#02120f', glow: 'rgba(45,212,168,.32)', gold: '#e8dcb8', soft: '#bfe3d6' }, 'AURORA – BỪNG SÁNG KỶ NGUYÊN MỚI', '05.10.2026  |  09:00 - Thứ Hai', 'TRUNG TÂM HỘI NGHỊ QUỐC GIA, HÀ NỘI')
+    ];
+    this.save('ecard.events', evs);
+    return evs;
+  }
+
+  componentDidMount() {
+    const fonts = ['400 20px "Be Vietnam Pro"', '700 20px "Playfair Display"', '800 20px "Playfair Display"', '600 20px "Montserrat"', '700 20px "Montserrat"', '600 20px "Cormorant Garamond"'];
+    Promise.all(fonts.map(f => document.fonts.load(f))).then(() => this.forceUpdate()).catch(() => {});
+  }
+  componentDidUpdate() { this.paint(); }
+  paint() {
+    const s = this.state;
+    if (s.view === 'card' && this._cardCanvas && s.card) {
+      const ev = s.events.find(e => e.id === s.card.eventId);
+      if (ev) this.drawCard(this._cardCanvas, ev, s.card.payload);
+    }
+    if (s.view === 'editor' && this._edCanvas && s.editor) {
+      const ev = s.editor.ev, c = this._edCanvas;
+      const sc = 0.5; c.width = ev.w * sc; c.height = ev.h * sc;
+      const ctx = c.getContext('2d'); ctx.save(); ctx.scale(sc, sc);
+      this.drawBg(ctx, ev); ctx.restore();
+    }
+  }
+
+  getImg(src) {
+    let e = this._imgs[src];
+    if (!e) { e = { img: new Image(), ok: false }; e.img.onload = () => { e.ok = true; this.forceUpdate(); }; e.img.src = src; this._imgs[src] = e; }
+    return e.ok ? e.img : null;
+  }
+  drawBg(ctx, ev) {
+    const w = ev.w, h = ev.h;
+    if (ev.bg) {
+      const img = this.getImg(ev.bg);
+      ctx.fillStyle = '#141021'; ctx.fillRect(0, 0, w, h);
+      if (img) {
+        const sc = Math.max(w / img.width, h / img.height);
+        const dw = img.width * sc, dh = img.height * sc;
+        ctx.drawImage(img, (w - dw) / 2, (h - dh) / 2, dw, dh);
+      }
+      return;
+    }
+    const t = ev.theme || { c1: '#2b1657', c2: '#120a2e', glow: 'rgba(147,88,255,.45)', gold: '#e9c88f' };
+    const lg = ctx.createLinearGradient(0, 0, 0, h); lg.addColorStop(0, t.c1); lg.addColorStop(1, t.c2);
+    ctx.fillStyle = lg; ctx.fillRect(0, 0, w, h);
+    const rg = ctx.createRadialGradient(w / 2, h * 0.42, 60, w / 2, h * 0.42, w * 0.62);
+    rg.addColorStop(0, t.glow); rg.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = rg; ctx.fillRect(0, 0, w, h);
+    ctx.strokeStyle = t.gold; ctx.globalAlpha = 0.5; ctx.lineWidth = 3; ctx.strokeRect(34, 34, w - 68, h - 68);
+    ctx.globalAlpha = 0.22; ctx.lineWidth = 1; ctx.strokeRect(48, 48, w - 96, h - 96); ctx.globalAlpha = 1;
+    ctx.fillStyle = t.gold; ctx.globalAlpha = 0.9;
+    ctx.beginPath(); ctx.arc(w / 2, 128, 4, 0, 7); ctx.fill();
+    ctx.fillRect(w / 2 - 90, 126, 60, 2); ctx.fillRect(w / 2 + 30, 126, 60, 2); ctx.globalAlpha = 1;
+  }
+  resolveText(f, payload) {
+    if (f.type === 'static') return f.text || '';
+    const v = (payload.data && payload.data[f.bind] != null ? payload.data[f.bind] : (payload.computed ? payload.computed[f.bind] : '')) || '';
+    return (f.prefix || '') + v;
+  }
+  drawText(ctx, f, text) {
+    if (!text) return;
+    if (f.upper) text = String(text).toUpperCase();
+    let size = f.size;
+    ctx.font = `${f.weight || '400'} ${size}px "${f.font}"`;
+    try { ctx.letterSpacing = (f.ls || 0) + 'px'; } catch (e) {}
+    if (f.maxW > 0) {
+      const m = ctx.measureText(text).width;
+      if (m > f.maxW) { size = Math.max(10, size * f.maxW / m); ctx.font = `${f.weight || '400'} ${size}px "${f.font}"`; }
+    }
+    ctx.textAlign = f.align || 'center'; ctx.textBaseline = 'alphabetic';
+    ctx.fillStyle = f.color || '#fff';
+    ctx.fillText(text, f.x, f.y + size * 0.75);
+    try { ctx.letterSpacing = '0px'; } catch (e) {}
+  }
+  drawQr(ctx, f, content) {
+    const size = f.size || 200, x = f.x - size / 2, y = f.y;
+    ctx.fillStyle = '#ffffff';
+    const r = 12; ctx.beginPath();
+    ctx.roundRect ? (ctx.roundRect(x - 12, y - 12, size + 24, size + 24, r), ctx.fill()) : ctx.fillRect(x - 12, y - 12, size + 24, size + 24);
+    ctx.fillStyle = '#1a1030';
+    if (window.qrcode) {
+      try {
+        const qr = window.qrcode(0, 'M'); qr.addData(content); qr.make();
+        const n = qr.getModuleCount(), cell = size / n;
+        for (let ri = 0; ri < n; ri++) for (let ci = 0; ci < n; ci++) if (qr.isDark(ri, ci)) ctx.fillRect(x + ci * cell, y + ri * cell, Math.ceil(cell), Math.ceil(cell));
+        return;
+      } catch (e) {}
+    }
+    const n = 25, cell = size / n, seed = this.hash(content);
+    for (let ri = 0; ri < n; ri++) for (let ci = 0; ci < n; ci++) {
+      const inF = (ri < 7 && ci < 7) || (ri < 7 && ci >= n - 7) || (ri >= n - 7 && ci < 7);
+      if (inF) { const rr = Math.min(ri, 6), cc = ci >= n - 7 ? ci - (n - 7) : Math.min(ci, 6); const b = rr === 0 || rr === 6 || cc === 0 || cc === 6 || (rr >= 2 && rr <= 4 && cc >= 2 && cc <= 4); if (b) ctx.fillRect(x + ci * cell, y + ri * cell, Math.ceil(cell), Math.ceil(cell)); }
+      else if ((this.hash(seed + '-' + ri + '-' + ci) % 100) < 46) ctx.fillRect(x + ci * cell, y + ri * cell, Math.ceil(cell), Math.ceil(cell));
+    }
+  }
+  drawCard(canvas, ev, payload) {
+    canvas.width = ev.w; canvas.height = ev.h;
+    const ctx = canvas.getContext('2d');
+    this.drawBg(ctx, ev);
+    for (const f of ev.fields) {
+      if (f.type === 'qr') this.drawQr(ctx, f, payload.computed.qrContent);
+      else this.drawText(ctx, f, this.resolveText(f, payload));
+    }
+  }
+
+  samplePayload(ev) {
+    const data = {};
+    for (const i of ev.inputs) data[i.key] = i.type === 'select' ? (i.options && i.options[0]) || '' : (i.placeholder || i.label).replace(/^VD:\s*/i, '');
+    return this.buildPayload(ev, data);
+  }
+  buildPayload(ev, data) {
+    const name = data.name || '', title = data.title || '';
+    const lucky = 1000 + this.hash((name + '|' + (data.phone || '')).toLowerCase()) % 9000;
+    const computed = {
+      fullNameDisplay: ((title ? title + ' ' : '') + name).toUpperCase().trim(),
+      lucky: String(lucky),
+      qrContent: 'CHECKIN|' + ev.id + '|' + name + '|' + (data.phone || '') + '|' + lucky
+    };
+    return { id: this.uid(), eventId: ev.id, eventName: ev.name, createdAt: new Date().toISOString(), data, computed, source: 'event-card-app' };
+  }
+
+  setForm(key, v) { this.setState(s => ({ formValues: { ...s.formValues, [key]: v }, formErr: '' })); }
+  submit() {
+    const s = this.state, ev = s.events.find(e => e.id === s.selEventId);
+    if (!ev) { this.setState({ formErr: 'Vui lòng chọn sự kiện.' }); return; }
+    for (const i of ev.inputs) if (i.required && !(s.formValues[i.key] || '').trim()) { this.setState({ formErr: 'Vui lòng nhập: ' + i.label }); return; }
+    const payload = this.buildPayload(ev, { ...s.formValues });
+    const norm = (x) => (x || '').trim().toLowerCase();
+    const matches = s.guests.filter(g => g.eventId === ev.id && norm(g.data.name) === norm(s.formValues.name));
+    if (matches.length) this.setState({ dupe: { payload, checkedId: matches[0].id, matches } });
+    else this.finalize(payload, null);
+  }
+  finalize(payload, replaceId) {
+    this.setState(s => {
+      let guests = replaceId ? s.guests.map(g => g.id === replaceId ? payload : g) : [...s.guests, payload];
+      this.save('ecard.guests', guests);
+      return { guests, dupe: null, view: 'card', card: { eventId: payload.eventId, payload }, copyLabel: 'Copy JSON' };
+    }, () => { const url = this.state.webhook.url; if (url) this.sendWebhook(url, payload, 'auto'); });
+  }
+  async sendWebhook(url, payload, kind) {
+    const t = new Date().toLocaleTimeString('vi-VN');
+    let line, ok = false;
+    try {
+      const r = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+      ok = r.ok; line = `[${t}] ${kind} → ${url} — HTTP ${r.status}`;
+    } catch (e) { line = `[${t}] ${kind} → ${url} — LỖI: không gửi được (mạng hoặc CORS chặn)`; }
+    this.setState(s => {
+      const webhook = { ...s.webhook, logs: [{ line, ok }, ...s.webhook.logs].slice(0, 30) };
+      this.save('ecard.webhook', webhook);
+      return { webhook };
+    });
+    return { ok, line };
+  }
+  download() {
+    const s = this.state, ev = s.events.find(e => e.id === s.card.eventId);
+    if (!ev || !this._cardCanvas) return;
+    this.drawCard(this._cardCanvas, ev, s.card.payload);
+    const a = document.createElement('a');
+    a.download = 'thiep-' + (s.card.payload.data.name || 'khach').trim().replace(/\s+/g, '-').toLowerCase() + '.png';
+    a.href = this._cardCanvas.toDataURL('image/png'); a.click();
+  }
+
+  setEd(fn) { this.setState(s => { const ev = structuredClone(s.editor.ev); fn(ev, s); return { editor: { ...s.editor, ev } }; }); }
+  edField(fn) { const sel = this.state.editor.sel; this.setEd(ev => { const f = ev.fields.find(x => x.id === sel); if (f) fn(f); }); }
+  onDrag(e, fid) {
+    e.preventDefault(); e.stopPropagation();
+    this.setState(s => ({ editor: { ...s.editor, sel: fid } }));
+    const wrap = this._edWrap; if (!wrap) return;
+    const ev0 = this.state.editor.ev;
+    const f0 = ev0.fields.find(x => x.id === fid); if (!f0) return;
+    const scale = wrap.clientWidth / ev0.w, sx = e.clientX, sy = e.clientY, ox = f0.x, oy = f0.y;
+    const move = (me) => {
+      const nx = Math.round(ox + (me.clientX - sx) / scale), ny = Math.round(oy + (me.clientY - sy) / scale);
+      this.setEd(ev2 => { const f = ev2.fields.find(x => x.id === fid); if (f) { f.x = Math.max(0, Math.min(ev2.w, nx)); f.y = Math.max(0, Math.min(ev2.h, ny)); } });
+    };
+    const up = () => { window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', up); };
+    window.addEventListener('pointermove', move); window.addEventListener('pointerup', up);
+  }
+  uploadBg(e) {
+    const file = e.target.files && e.target.files[0]; if (!file) return;
+    const rd = new FileReader();
+    rd.onload = () => {
+      const img = new Image();
+      img.onload = () => {
+        const MAX = 1400, sc = Math.min(1, MAX / Math.max(img.width, img.height));
+        const c = document.createElement('canvas'); c.width = Math.round(img.width * sc); c.height = Math.round(img.height * sc);
+        c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+        const url = c.toDataURL('image/jpeg', 0.85);
+        this.setEd(ev => { ev.bg = url; ev.w = c.width; ev.h = c.height; });
+      };
+      img.src = rd.result;
+    };
+    rd.readAsDataURL(file);
+    e.target.value = '';
+  }
+  addField(f) { this.setEd(ev => ev.fields.push(f)); this.setState(s => ({ editor: { ...s.editor, sel: f.id } })); }
+  newTextField(extra) { return { id: this.uid(), x: 540, y: 640, size: 32, font: 'Montserrat', weight: '600', color: '#ffffff', align: 'center', upper: false, ls: 0, maxW: 0, ...extra }; }
+
+  renderVals() {
+    const s = this.state, self = this;
+    const v = {
+      isHome: s.view === 'home', isCard: s.view === 'card', isLogin: s.view === 'login',
+      isAdmin: s.view === 'admin', isEditor: s.view === 'editor',
+      gotoAdmin: (e) => { e.preventDefault(); this.setState({ view: this._authed ? 'admin' : 'login', loginVal: '', loginErr: false }); },
+      gotoHome: (e) => { e.preventDefault(); this.setState({ view: 'home' }); },
+      copyLabel: s.copyLabel
+    };
+
+    // ----- customer form -----
+    const ev = s.events.find(e => e.id === s.selEventId);
+    v.eventOptions = s.events.map(e => ({ id: e.id, name: e.name }));
+    v.selEventId = s.selEventId;
+    v.onSelEvent = (e) => this.setState({ selEventId: e.target.value, formErr: '' });
+    v.formFields = ev ? ev.inputs.map(i => ({
+      label: i.label, labelUpper: i.label.toUpperCase(), placeholder: i.placeholder || '',
+      isSelect: i.type === 'select', isText: i.type !== 'select',
+      options: (i.options || []).map(o => ({ v: o })),
+      value: s.formValues[i.key] || '',
+      onChange: (e) => this.setForm(i.key, e.target.value)
+    })) : [];
+    v.formErr = s.formErr;
+    v.onSubmit = () => this.submit();
+
+    // ----- dupe modal -----
+    v.isDupe = !!s.dupe;
+    if (s.dupe) {
+      v.dupeMatches = s.dupe.matches.map(m => ({
+        desc: `${m.data.title || ''} ${m.data.name || ''} — SĐT: ${m.data.phone || '—'} — ${m.data.position || '—'} — ${m.data.company || '—'}`.trim(),
+        checked: s.dupe.checkedId === m.id,
+        onToggle: () => this.setState(st => ({ dupe: { ...st.dupe, checkedId: m.id } }))
+      }));
+      v.onDupeReplace = () => this.finalize(s.dupe.payload, s.dupe.checkedId);
+      v.onDupeNew = () => this.finalize(s.dupe.payload, null);
+      v.onDupeCancel = () => this.setState({ dupe: null });
+    }
+
+    // ----- card view -----
+    v.cardCanvasRef = (el) => { this._cardCanvas = el; if (el) this.paint(); };
+    v.onDownload = () => this.download();
+    v.onAgain = () => this.setState({ view: 'home', card: null });
+    v.showJson = (this.props.showJsonOnCard ?? true) && !!s.card;
+    v.cardJson = s.card ? JSON.stringify(s.card.payload, null, 2) : '';
+    v.onCopyJson = () => { navigator.clipboard.writeText(v.cardJson).then(() => this.setState({ copyLabel: 'Đã copy ✓' })); };
+
+    // ----- login -----
+    v.loginVal = s.loginVal; v.loginErr = s.loginErr;
+    v.onLoginChange = (e) => this.setState({ loginVal: e.target.value, loginErr: false });
+    const tryLogin = () => {
+      if (s.loginVal === (this.props.adminPassword ?? 'admin')) { this._authed = true; this.setState({ view: 'admin', loginVal: '' }); }
+      else this.setState({ loginErr: true });
+    };
+    v.onLoginSubmit = tryLogin;
+    v.onLoginKey = (e) => { if (e.key === 'Enter') tryLogin(); };
+    v.onLogout = () => { this._authed = false; this.setState({ view: 'home' }); };
+
+    // ----- admin tabs -----
+    const tab = s.adminTab;
+    v.tabEvents = tab === 'events'; v.tabGuests = tab === 'guests'; v.tabWebhook = tab === 'webhook';
+    const tabBg = (on) => on ? '#201d29' : 'transparent', tabColor = (on) => on ? '#ffffff' : '#766f80';
+    v.tabEventsBg = tabBg(v.tabEvents); v.tabEventsColor = tabColor(v.tabEvents);
+    v.tabGuestsBg = tabBg(v.tabGuests); v.tabGuestsColor = tabColor(v.tabGuests);
+    v.tabWebhookBg = tabBg(v.tabWebhook); v.tabWebhookColor = tabColor(v.tabWebhook);
+    v.onTabEvents = () => this.setState({ adminTab: 'events' });
+    v.onTabGuests = () => this.setState({ adminTab: 'guests' });
+    v.onTabWebhook = () => this.setState({ adminTab: 'webhook' });
+    v.guestCount = s.guests.length;
+
+    v.adminEvents = s.events.map(e => ({
+      name: e.name, dims: e.w + ' × ' + e.h,
+      swatch: e.theme ? `linear-gradient(135deg,${e.theme.c1},${e.theme.c2})` : '#201d29',
+      meta: `${e.fields.length} thành phần · ${e.inputs.length} trường nhập · ${s.guests.filter(g => g.eventId === e.id).length} khách`,
+      onEdit: () => this.setState({ view: 'editor', editor: { ev: structuredClone(e), sel: null } }),
+      onRename: () => { const n = prompt('Tên sự kiện mới:', e.name); if (n) { const events = s.events.map(x => x.id === e.id ? { ...x, name: n } : x); this.save('ecard.events', events); this.setState({ events }); } },
+      onDel: () => { if (confirm('Xóa sự kiện "' + e.name + '"?')) { const events = s.events.filter(x => x.id !== e.id); this.save('ecard.events', events); this.setState({ events, selEventId: events[0] ? events[0].id : '' }); } }
+    }));
+    v.onAddEvent = () => {
+      const n = prompt('Tên sự kiện mới:', 'SỰ KIỆN MỚI'); if (!n) return;
+      const ne = { id: this.uid(), name: n, w: 1080, h: 1350, bg: null, theme: { c1: '#2b1657', c2: '#120a2e', glow: 'rgba(147,88,255,.45)', gold: '#e9c88f', soft: '#d9cff0' }, inputs: this.defaultInputs(), fields: [this.newTextField({ type: 'bind', bind: 'fullNameDisplay', prefix: '', y: 300, size: 54, font: 'Playfair Display', weight: '700', upper: true, maxW: 940 }), { id: this.uid(), type: 'qr', x: 540, y: 1010, size: 220 }] };
+      const events = [...s.events, ne]; this.save('ecard.events', events); this.setState({ events });
+    };
+
+    v.guestsEmpty = s.guests.length === 0;
+    v.guests = [...s.guests].reverse().map(g => ({
+      name: (g.computed && g.computed.fullNameDisplay) || g.data.name || '—',
+      eventName: g.eventName,
+      time: new Date(g.createdAt).toLocaleString('vi-VN'),
+      onView: () => this.setState({ viewGuest: g, resendMsg: '', copyLabel: 'Copy JSON' })
+    }));
+    v.onExportAll = () => {
+      const a = document.createElement('a');
+      a.download = 'guests-payload.json';
+      a.href = 'data:application/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(s.guests, null, 2)); a.click();
+    };
+
+    v.isGuestModal = !!s.viewGuest;
+    if (s.viewGuest) {
+      const g = s.viewGuest;
+      v.guestJson = JSON.stringify(g, null, 2);
+      v.onCloseGuest = () => this.setState({ viewGuest: null });
+      v.onCopyGuest = () => navigator.clipboard.writeText(v.guestJson).then(() => this.setState({ copyLabel: 'Đã copy ✓' }));
+      v.onDownloadGuest = () => { const a = document.createElement('a'); a.download = 'guest-' + g.id + '.json'; a.href = 'data:application/json;charset=utf-8,' + encodeURIComponent(v.guestJson); a.click(); };
+      v.onResend = async () => {
+        const url = s.webhook.url;
+        if (!url) { this.setState({ resendMsg: 'Chưa cấu hình URL webhook (tab Webhook API).' }); return; }
+        this.setState({ resendMsg: 'Đang gửi…' });
+        const r = await this.sendWebhook(url, g, 'thủ công');
+        this.setState({ resendMsg: r.line });
+      };
+      v.onDeleteGuest = () => { if (confirm('Xóa bản ghi khách này?')) { const guests = s.guests.filter(x => x.id !== g.id); this.save('ecard.guests', guests); this.setState({ guests, viewGuest: null }); } };
+      v.resendMsg = s.resendMsg;
+    }
+
+    v.webhookUrl = s.webhookDraft != null ? s.webhookDraft : s.webhook.url;
+    v.onWebhookChange = (e) => this.setState({ webhookDraft: e.target.value });
+    v.onSaveWebhook = () => this.setState(st => { const webhook = { ...st.webhook, url: (st.webhookDraft != null ? st.webhookDraft : st.webhook.url).trim() }; this.save('ecard.webhook', webhook); return { webhook, webhookDraft: null, webhookMsg: 'Đã lưu. Mỗi thiệp mới tạo sẽ tự động POST về URL này.' }; });
+    v.onTestWebhook = async () => {
+      const url = (s.webhookDraft != null ? s.webhookDraft : s.webhook.url).trim();
+      if (!url) { this.setState({ webhookMsg: 'Nhập URL trước đã.' }); return; }
+      this.setState({ webhookMsg: 'Đang gửi payload mẫu…' });
+      const sample = this.samplePayload(s.events[0] || { id: 'demo', name: 'demo', inputs: [] });
+      const r = await this.sendWebhook(url, sample, 'gửi thử');
+      this.setState({ webhookMsg: r.ok ? 'Gửi thành công ✓' : r.line });
+    };
+    v.webhookMsg = s.webhookMsg;
+    v.webhookLogs = s.webhook.logs.map(l => ({ line: l.line, color: l.ok ? '#1e7a46' : '#a93226' }));
+    v.logsEmpty = s.webhook.logs.length === 0;
+
+    // ----- editor -----
+    if (s.editor) {
+      const ed = s.editor, e2 = ed.ev, sample = this.samplePayload(e2);
+      v.edName = e2.name; v.onEdName = (e) => this.setEd(x => { x.name = e.target.value; });
+      v.edW = String(e2.w); v.edH = String(e2.h);
+      v.onEdW = (e) => { const n = parseInt(e.target.value) || e2.w; this.setEd(x => { x.w = Math.max(200, Math.min(3000, n)); }); };
+      v.onEdH = (e) => { const n = parseInt(e.target.value) || e2.h; this.setEd(x => { x.h = Math.max(200, Math.min(3000, n)); }); };
+      v.onBgUpload = (e) => this.uploadBg(e);
+      v.hasBg = !!e2.bg;
+      v.onBgRemove = () => this.setEd(x => { x.bg = null; });
+      v.edWrapRef = (el) => { this._edWrap = el; };
+      v.edCanvasRef = (el) => { this._edCanvas = el; if (el) this.paint(); };
+      v.onEdCancel = () => this.setState({ view: 'admin', editor: null });
+      v.onEdSave = () => { const events = s.events.map(x => x.id === e2.id ? e2 : x); if (this.save('ecard.events', events)) this.setState({ events, view: 'admin', editor: null }); };
+
+      const dispScale = () => (this._edWrap ? this._edWrap.clientWidth : 540) / e2.w;
+      const sc = dispScale();
+      v.edPlacements = e2.fields.map(f => {
+        const isQr = f.type === 'qr', seld = ed.sel === f.id;
+        const base = {
+          position: 'absolute', cursor: 'move', touchAction: 'none', lineHeight: 1.15, whiteSpace: 'nowrap',
+          outline: seld ? '2px solid #38bdf8' : '1px dashed rgba(255,255,255,.25)', outlineOffset: '2px', borderRadius: '3px'
+        };
+        let st;
+        if (isQr) {
+          st = { ...base, left: (f.x - f.size / 2) * sc + 'px', top: f.y * sc + 'px', width: f.size * sc + 'px', height: f.size * sc + 'px' };
+        } else {
+          const tf = f.align === 'center' ? 'translateX(-50%)' : (f.align === 'right' ? 'translateX(-100%)' : 'none');
+          st = {
+            ...base, left: f.x * sc + 'px', top: f.y * sc + 'px', transform: tf,
+            fontFamily: `'${f.font}',sans-serif`, fontWeight: f.weight, fontSize: Math.max(6, f.size * sc) + 'px',
+            color: f.color, letterSpacing: (f.ls || 0) * sc + 'px', textTransform: f.upper ? 'uppercase' : 'none',
+            maxWidth: f.maxW > 0 ? f.maxW * sc + 'px' : 'none', overflow: 'hidden', textOverflow: 'ellipsis'
+          };
+        }
+        return {
+          style: st, isQr, isText: !isQr,
+          display: isQr ? '' : this.resolveText(f, sample),
+          qrStyle: { width: '100%', height: '100%', background: 'rgba(255,255,255,.92)', color: '#1a1030', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '14px', borderRadius: '6px', boxSizing: 'border-box' },
+          onDown: (e) => this.onDrag(e, f.id)
+        };
+      });
+
+      v.edInputs = e2.inputs.map(i => ({
+        key: i.key, label: i.label, placeholder: i.placeholder || '',
+        isSelect: i.type === 'select', isText: i.type !== 'select',
+        options: (i.options || []).join(', '), required: !!i.required,
+        onLabel: (e) => this.setEd(x => { const it = x.inputs.find(z => z.key === i.key); if (it) it.label = e.target.value; }),
+        onPlaceholder: (e) => this.setEd(x => { const it = x.inputs.find(z => z.key === i.key); if (it) it.placeholder = e.target.value; }),
+        onType: () => this.setEd(x => { const it = x.inputs.find(z => z.key === i.key); if (it) it.type = it.type === 'select' ? 'text' : 'select'; if (it && it.type === 'select' && !it.options) it.options = ['Lựa chọn 1', 'Lựa chọn 2']; }),
+        onOptions: (e) => this.setEd(x => { const it = x.inputs.find(z => z.key === i.key); if (it) it.options = e.target.value.split(',').map(o => o.trim()).filter(Boolean); }),
+        onRequired: () => this.setEd(x => { const it = x.inputs.find(z => z.key === i.key); if (it) it.required = !it.required; }),
+        onRemove: () => this.setEd(x => { x.inputs = x.inputs.filter(z => z.key !== i.key); })
+      }));
+      v.onAddInput = () => { const k = 'field_' + this.uid().slice(0, 4); this.setEd(x => x.inputs.push({ key: k, label: 'Trường mới', type: 'text', placeholder: '', required: false })); };
+
+      const fieldName = (f) => f.type === 'qr' ? '▣ QR check-in' : f.type === 'bind' ? '⤷ ' + (f.bind === 'lucky' ? 'Lucky Number' : f.bind) : '“' + (f.text || '').slice(0, 28) + '”';
+      v.edPlaceList = e2.fields.map(f => ({
+        name: fieldName(f),
+        bg: ed.sel === f.id ? 'rgba(91,61,245,.1)' : '#f7f6f3',
+        bd: ed.sel === f.id ? '#5b3df5' : 'rgba(32,29,41,.08)',
+        onSel: () => this.setState(st => ({ editor: { ...st.editor, sel: f.id } })),
+        onRemove: (e) => { e.stopPropagation(); this.setEd(x => { x.fields = x.fields.filter(z => z.id !== f.id); }); if (ed.sel === f.id) this.setState(st => ({ editor: { ...st.editor, sel: null } })); }
+      }));
+      v.onAddBind = () => this.addField(this.newTextField({ type: 'bind', bind: (e2.inputs[0] && e2.inputs[0].key) || 'name', prefix: '' }));
+      v.onAddStatic = () => this.addField(this.newTextField({ type: 'static', text: 'Nội dung mới' }));
+      v.onAddQr = () => this.addField({ id: this.uid(), type: 'qr', x: 540, y: 900, size: 220 });
+      v.onAddLucky = () => this.addField(this.newTextField({ type: 'bind', bind: 'lucky', prefix: 'Lucky Number: ', color: '#e9c88f' }));
+
+      const sel = e2.fields.find(f => f.id === ed.sel);
+      v.hasSel = !!sel;
+      if (sel) {
+        v.selName = fieldName(sel);
+        v.selIsBind = sel.type === 'bind'; v.selIsStatic = sel.type === 'static'; v.selIsText = sel.type !== 'qr';
+        v.bindOptions = [
+          ...e2.inputs.map(i => ({ v: i.key, label: i.label + ' (' + i.key + ')' })),
+          { v: 'fullNameDisplay', label: 'Danh xưng + Họ tên (fullNameDisplay)' },
+          { v: 'lucky', label: 'Lucky Number (tự sinh)' }
+        ];
+        v.selBind = sel.bind || ''; v.onSelBind = (e) => this.edField(f => { f.bind = e.target.value; });
+        v.selPrefix = sel.prefix || ''; v.onSelPrefix = (e) => this.edField(f => { f.prefix = e.target.value; });
+        v.selText = sel.text || ''; v.onSelText = (e) => this.edField(f => { f.text = e.target.value; });
+        v.selX = String(sel.x); v.onSelX = (e) => { const n = parseInt(e.target.value); if (!isNaN(n)) this.edField(f => { f.x = n; }); };
+        v.selY = String(sel.y); v.onSelY = (e) => { const n = parseInt(e.target.value); if (!isNaN(n)) this.edField(f => { f.y = n; }); };
+        v.selSizeLabel = sel.type === 'qr' ? 'Cỡ QR' : 'Cỡ chữ';
+        v.selSize = String(sel.size); v.onSelSize = (e) => { const n = parseInt(e.target.value); if (!isNaN(n)) this.edField(f => { f.size = Math.max(6, n); }); };
+        v.fontOptions = [{ v: 'Playfair Display' }, { v: 'Montserrat' }, { v: 'Cormorant Garamond' }, { v: 'Be Vietnam Pro' }];
+        v.selFont = sel.font; v.onSelFont = (e) => this.edField(f => { f.font = e.target.value; });
+        v.weightOptions = [{ v: '400' }, { v: '500' }, { v: '600' }, { v: '700' }, { v: '800' }];
+        v.selWeight = sel.weight || '400'; v.onSelWeight = (e) => this.edField(f => { f.weight = e.target.value; });
+        v.selColor = sel.color || '#ffffff'; v.onSelColor = (e) => this.edField(f => { f.color = e.target.value; });
+        const aBg = (on) => on ? '#201d29' : '#ffffff', aCo = (on) => on ? '#ffffff' : '#201d29';
+        v.alignLBg = aBg(sel.align === 'left'); v.alignLColor = aCo(sel.align === 'left');
+        v.alignCBg = aBg(sel.align === 'center' || !sel.align); v.alignCColor = aCo(sel.align === 'center' || !sel.align);
+        v.alignRBg = aBg(sel.align === 'right'); v.alignRColor = aCo(sel.align === 'right');
+        v.onAlignL = () => this.edField(f => { f.align = 'left'; });
+        v.onAlignC = () => this.edField(f => { f.align = 'center'; });
+        v.onAlignR = () => this.edField(f => { f.align = 'right'; });
+        v.selLS = String(sel.ls || 0); v.onSelLS = (e) => { const n = parseFloat(e.target.value); this.edField(f => { f.ls = isNaN(n) ? 0 : n; }); };
+        v.selMaxW = String(sel.maxW || 0); v.onSelMaxW = (e) => { const n = parseInt(e.target.value); this.edField(f => { f.maxW = isNaN(n) ? 0 : n; }); };
+        v.selUpper = !!sel.upper; v.onSelUpper = () => this.edField(f => { f.upper = !f.upper; });
+      }
+    }
+    return v;
+  }
+}
+</script>
+</body>
+</html>
