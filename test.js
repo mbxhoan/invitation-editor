@@ -27,7 +27,7 @@ const env = {
     setItem: (k, v) => store.set(k, v),
     removeItem: (k) => store.delete(k)
   },
-  window: { qrcode: null },
+  window: { qrcode: null, scrollY: 0, scrollTo() {} },
   navigator: {},
   Image: function () {},
   addEventListener() {},
@@ -35,7 +35,7 @@ const env = {
   fetch: () => Promise.reject(new Error('offline'))
 };
 
-const exported = 'S,buildPayload,samplePayload,submit,finalize,render,go,esc,' +
+const exported = 'S,buildPayload,samplePayload,submit,finalize,render,go,esc,saveCardEdits,' +
   'homeView,cardView,loginView,adminView,editorView,guestModal,inspector,addField,newTextField,fieldName';
 const api = new Function(
   ...Object.keys(env),
@@ -134,6 +134,34 @@ check('same name under a different event is not a duplicate', () => {
   assert.equal(S.dupe, null);
   assert.equal(S.guests.length, 3);
   S.selEventId = S.events[0].id;
+});
+
+/* ---- inline editing on the card screen ---- */
+check('card-page edits update the same record in place', () => {
+  const before = S.card.payload;
+  const count = S.guests.length;
+  S.cardEdit = { ...S.cardEdit, phone: '88888', position: 'TỔNG GIÁM ĐỐC' };
+  api.saveCardEdits();
+
+  const after = S.card.payload;
+  assert.equal(S.guests.length, count, 'an edit must not create a second record');
+  assert.equal(after.id, before.id, 'record id must survive an edit');
+  assert.equal(after.createdAt, before.createdAt);
+  assert.equal(after.data.position, 'TỔNG GIÁM ĐỐC');
+  assert.ok(after.computed.qrContent.includes('88888'), 'QR must re-derive from the new data');
+  assert.notEqual(after.computed.lucky, before.computed.lucky);
+  assert.equal(JSON.parse(store.get('ecard.guests')).find((g) => g.id === before.id).data.phone, '88888');
+  assert.ok(!S.cardErr);
+});
+
+check('card-page edits cannot blank a required field', () => {
+  const good = S.card.payload;
+  S.cardEdit = { ...S.cardEdit, name: '   ' };
+  api.saveCardEdits();
+  assert.ok(S.cardErr);
+  assert.match(S.cardMsg, /Họ và tên/);
+  assert.equal(S.card.payload, good, 'card must keep the last valid payload');
+  S.cardEdit = { ...S.cardEdit, name: 'Nguyễn Văn A' };
 });
 
 /* ---- every screen renders ---- */

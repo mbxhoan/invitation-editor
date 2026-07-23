@@ -84,6 +84,41 @@ h3.sec{margin:0;font:700 15px 'Be Vietnam Pro',sans-serif}
          border-radius:8px;padding:9px 14px}
 .chk{display:flex;gap:4px;align-items:center;cursor:pointer}
 .keytag{font:11px ui-monospace,monospace;background:var(--bg);padding:2px 7px;border-radius:5px}
+
+/* --- guest form: fit the viewport on desktop, never scroll the page --- */
+.home{display:flex;flex-direction:column;align-items:center;padding:52px 20px 32px}
+.hero{display:flex;flex-direction:column;align-items:center;gap:10px}
+.hero h1{margin:10px 0 0;font:600 clamp(30px,5vw,44px)/1.1 'Playfair Display',serif;font-style:italic;text-align:center}
+.hero p{margin:4px 0 0;max-width:440px;text-align:center;font-size:15px;line-height:1.6;color:var(--mut)}
+.rule{width:120px;height:1px;background:linear-gradient(90deg,transparent,#c9b8f5,transparent);margin:14px 0 6px}
+.formwrap{width:100%;max-width:560px;padding:28px;margin-top:18px;min-height:0;overflow:auto}
+.form-grid{display:flex;flex-direction:column;gap:18px}
+.foot{margin-top:auto;padding-top:36px;font-size:13px}
+
+/* --- finished card: preview beside the edit panel --- */
+.cardscreen{display:flex;flex-direction:column;align-items:center;padding:28px 16px}
+.cardlayout{width:100%;max-width:1120px;display:flex;gap:22px;align-items:flex-start;justify-content:center;flex-wrap:wrap}
+.cardpane{flex:1 1 380px;max-width:620px;min-width:0;display:flex;flex-direction:column;gap:14px}
+.cardframe{border-radius:14px;overflow:hidden;box-shadow:0 20px 50px rgba(32,29,41,.25);line-height:0;
+           display:flex;justify-content:center;align-items:center;min-height:0}
+.cardframe canvas{max-width:100%;height:auto;display:block}
+.cardbtns{display:flex;gap:12px;flex-wrap:wrap}
+.editpane{flex:1 1 320px;max-width:400px;min-width:0;padding:22px;display:flex;flex-direction:column;gap:14px}
+
+@media (min-width:900px) and (min-height:640px){
+  .home{height:100vh;overflow:hidden;padding:30px 20px 18px}
+  .foot{padding-top:16px}
+  .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px 16px}
+  .form-grid > .full{grid-column:1/-1}
+}
+@media (min-width:980px) and (min-height:640px){
+  .cardscreen{height:100vh;overflow:hidden;padding:20px 16px}
+  .cardlayout{flex:1;min-height:0;flex-wrap:nowrap}
+  .cardpane{min-height:0}
+  .cardframe{flex:1;min-height:0}
+  .cardframe canvas{max-height:100%;width:auto;height:auto}
+  .editpane{max-height:100%;overflow:auto}
+}
 </style>
 </head>
 <body>
@@ -126,7 +161,7 @@ function defaultInputs() {
   return [
     { key: 'title', label: 'Danh xưng', type: 'select', options: ['Ông', 'Bà'], required: true, placeholder: '' },
     { key: 'name', label: 'Họ và tên', type: 'text', placeholder: 'VD: NGUYỄN VĂN A', required: true },
-    { key: 'phone', label: 'Số điện thoại (5 số cuối)', type: 'text', placeholder: 'VD: 5 số cuối là 12345', required: true },
+    { key: 'phone', label: 'Số ĐIỆN THOẠI', type: 'text', placeholder: 'VD: ', required: true },
     { key: 'position', label: 'Chức danh', type: 'text', placeholder: 'VD: GIÁM ĐỐC KINH DOANH', required: false },
     { key: 'company', label: 'Tên công ty / Đại lý', type: 'text', placeholder: 'VD: NAM VIỆT GROUP', required: false }
   ];
@@ -300,7 +335,7 @@ const S = {
   webhook: load('ecard.webhook') || { url: '', logs: [] },
   selEventId: events0[0] ? events0[0].id : '',
   formValues: {}, formErr: '',
-  dupe: null, card: null, copyLabel: 'Copy JSON',
+  dupe: null, card: null, cardEdit: {}, cardMsg: '', cardErr: false, copyLabel: 'Copy JSON',
   loginVal: '', loginErr: false, authed: false,
   adminTab: 'events',
   viewGuest: null, resendMsg: '', webhookMsg: '', webhookDraft: null,
@@ -322,6 +357,12 @@ const fire = (attr) => (e) => {
 };
 
 /* ---------- render ---------- */
+// Entrance animations replay on every innerHTML rebuild, which reads as flicker.
+// Only animate when a render actually presents something new; otherwise hold
+// the scroll position so an in-place update is invisible.
+let animate = true;
+const fade = () => (animate ? ' fade' : '');
+
 function render() {
   const app = $('#app');
   // preserve caret across the full re-render; inputs carry a stable data-k
@@ -329,9 +370,12 @@ function render() {
   const k = ae && ae.dataset ? ae.dataset.k : null;
   let selStart = null, selEnd = null;
   if (k) { try { selStart = ae.selectionStart; selEnd = ae.selectionEnd; } catch (e) {} }
+  const sy = window.scrollY;
 
   handlers = {};
   app.innerHTML = viewFor(S.view) + (S.dupe ? dupeModal() : '') + (S.viewGuest ? guestModal() : '');
+  window.scrollTo(0, animate ? 0 : sy);
+  animate = false;
 
   if (k) {
     const el = app.querySelector('[data-k="' + k + '"]');
@@ -371,37 +415,51 @@ function paint() {
     }
   }
 }
-const go = (view, patch) => { Object.assign(S, patch || {}, { view }); render(); };
+const go = (view, patch) => {
+  animate = S.view !== view;
+  Object.assign(S, patch || {}, { view });
+  render();
+};
+
+/* ---------- shared: one input block per declared event field ---------- */
+function fieldBlock(i, value, kPrefix, onChange, cls) {
+  const ch = on(onChange);
+  const k = `${kPrefix}.${esc(i.key)}`;
+  const control = i.type === 'select'
+    ? `<select class="inp" data-k="${k}" data-change="${ch}">
+         <option value="">${esc(i.label)}</option>
+         ${(i.options || []).map((o) => `<option value="${esc(o)}"${o === value ? ' selected' : ''}>${esc(o)}</option>`).join('')}
+       </select>`
+    : `<input class="inp" data-k="${k}" data-change="${ch}"
+              value="${esc(value)}" placeholder="${esc(i.placeholder || '')}">`;
+  return `<div class="field ${cls || ''}"><label class="lbl">${esc(i.label.toUpperCase())}</label>${control}</div>`;
+}
 
 /* ---------- home: guest form ---------- */
 function homeView() {
   const ev = curEvent();
-  const fields = ev ? ev.inputs.map((i) => {
-    const val = S.formValues[i.key] || '';
-    const ch = on((e) => { S.formValues[i.key] = e.target.value; S.formErr = ''; render(); });
-    const control = i.type === 'select'
-      ? `<select class="inp" data-k="f.${esc(i.key)}" data-change="${ch}">
-           <option value="">${esc(i.label)}</option>
-           ${(i.options || []).map((o) => `<option value="${esc(o)}"${o === val ? ' selected' : ''}>${esc(o)}</option>`).join('')}
-         </select>`
-      : `<input class="inp" data-k="f.${esc(i.key)}" data-change="${ch}"
-                value="${esc(val)}" placeholder="${esc(i.placeholder || '')}">`;
-    return `<div class="field"><label class="lbl">${esc(i.label.toUpperCase())}</label>${control}</div>`;
-  }).join('') : '';
+  const n = ev ? ev.inputs.length : 0;
+  const fields = ev ? ev.inputs.map((i, idx) => fieldBlock(
+    i, S.formValues[i.key] || '', 'f',
+    // typing must not re-render — that is what made the page flicker.
+    // Only the error banner appearing/disappearing changes the layout.
+    (e) => { S.formValues[i.key] = e.target.value; if (S.formErr) { S.formErr = ''; render(); } },
+    idx === n - 1 && n % 2 === 1 ? 'full' : ''
+  )).join('') : '';
 
   const evChange = on((e) => { S.selEventId = e.target.value; S.formErr = ''; render(); });
   return `
-  <div class="screen" style="display:flex;flex-direction:column;align-items:center;padding:52px 20px 32px">
-    <div class="stack fade" style="align-items:center;gap:10px">
+  <div class="screen home">
+    <div class="hero${fade()}">
       <div style="width:52px;height:52px;border-radius:14px;background:linear-gradient(135deg,#5b3df5,#8a5cf6);display:flex;align-items:center;justify-content:center;color:#fff;font:700 22px 'Playfair Display',serif">T</div>
-      <h1 style="margin:10px 0 0;font:600 clamp(34px,6vw,46px)/1.1 'Playfair Display',serif;font-style:italic;text-align:center">Tạo thiệp online</h1>
-      <p class="muted" style="margin:4px 0 0;max-width:440px;text-align:center;font-size:15px;line-height:1.6">Chọn sự kiện và nhập thông tin của bạn để nhận thiệp mời cá nhân hóa, tải về ngay.</p>
-      <div style="width:120px;height:1px;background:linear-gradient(90deg,transparent,#c9b8f5,transparent);margin:14px 0 6px"></div>
+      <h1>Tạo thiệp online</h1>
+      <p>Chọn sự kiện và nhập thông tin của bạn để nhận thiệp mời cá nhân hóa, tải về ngay.</p>
+      <div class="rule"></div>
     </div>
-    <div class="panel fade" style="width:100%;max-width:560px;padding:28px;margin-top:18px;animation-delay:.08s">
+    <div class="panel formwrap${fade()}" style="animation-delay:.08s">
       <div class="eyebrow" style="padding-bottom:14px;border-bottom:1px solid rgba(32,29,41,.08);margin-bottom:20px">THÔNG TIN THIỆP ONLINE</div>
-      <div class="stack" style="gap:18px">
-        <div class="field">
+      <div class="form-grid">
+        <div class="field full">
           <label class="lbl">SỰ KIỆN THAM GIA</label>
           <select class="inp" data-k="f.event" data-change="${evChange}">
             <option value="">— Chọn sự kiện —</option>
@@ -409,11 +467,11 @@ function homeView() {
           </select>
         </div>
         ${fields}
-        ${S.formErr ? `<div class="err">${esc(S.formErr)}</div>` : ''}
-        <button class="btn pri" style="padding:14px 22px;font-size:15px" data-click="${on(submit)}">Tạo thiệp mời</button>
+        ${S.formErr ? `<div class="err full">${esc(S.formErr)}</div>` : ''}
+        <button class="btn pri full" style="padding:14px 22px;font-size:15px" data-click="${on(submit)}">Tạo thiệp mời</button>
       </div>
     </div>
-    <div style="margin-top:auto;padding-top:36px;font-size:13px">
+    <div class="foot">
       <a href="#" class="muted" data-click="${on(() => go(S.authed ? 'admin' : 'login', { loginVal: '', loginErr: false }))}">Trang quản trị →</a>
     </div>
   </div>`;
@@ -432,7 +490,7 @@ function submit() {
   const payload = buildPayload(ev, { ...S.formValues });
   const norm = (x) => (x || '').trim().toLowerCase();
   const matches = S.guests.filter((g) => g.eventId === ev.id && norm(g.data.name) === norm(S.formValues.name));
-  if (matches.length) { S.dupe = { payload, checkedId: matches[0].id, matches }; render(); }
+  if (matches.length) { S.dupe = { payload, checkedId: matches[0].id, matches }; animate = true; render(); }
   else finalize(payload, null);
 }
 function finalize(payload, replaceId) {
@@ -440,32 +498,74 @@ function finalize(payload, replaceId) {
   save('ecard.guests', S.guests);
   S.dupe = null;
   S.card = { eventId: payload.eventId, payload };
+  S.cardEdit = { ...payload.data };
+  S.cardMsg = ''; S.cardErr = false;
   S.copyLabel = 'Copy JSON';
   go('card');
   if (S.webhook.url) sendWebhook(S.webhook.url, payload, 'auto');
 }
 
-/* ---------- card result ---------- */
+/* ---------- card result + inline editing ---------- */
 function cardView() {
-  const json = S.card ? JSON.stringify(S.card.payload, null, 2) : '';
+  const ev = S.events.find((e) => e.id === S.card.eventId);
+  const json = JSON.stringify(S.card.payload, null, 2);
+  // edits are staged in S.cardEdit and only applied to the card on "Lưu"
+  const fields = ev ? ev.inputs.map((i) => fieldBlock(
+    i, S.cardEdit[i.key] || '', 'c',
+    (e) => { S.cardEdit[i.key] = e.target.value; }
+  )).join('') : '';
+
   return `
-  <div class="screen" style="display:flex;flex-direction:column;align-items:center;padding:36px 16px 40px">
-    <div class="stack fade" style="width:100%;max-width:620px;gap:16px">
-      <div style="border-radius:14px;overflow:hidden;box-shadow:0 20px 50px rgba(32,29,41,.25);line-height:0">
-        <canvas id="cardCanvas" style="width:100%;display:block"></canvas>
+  <div class="screen cardscreen">
+    <div class="cardlayout${fade()}">
+      <div class="cardpane">
+        <div class="cardframe"><canvas id="cardCanvas"></canvas></div>
+        <div class="cardbtns">
+          <button class="btn gold" style="flex:2;min-width:180px;padding:15px 22px;font-size:15px" data-click="${on(downloadCard)}">Tải ảnh về</button>
+          <button class="btn" style="flex:1;min-width:120px;padding:15px 22px;font-size:15px" data-click="${on(() => go('home', { card: null }))}">Tạo lại</button>
+        </div>
       </div>
-      <div style="display:flex;gap:12px;flex-wrap:wrap">
-        <button class="btn gold" style="flex:2;min-width:180px;padding:15px 22px;font-size:15px" data-click="${on(downloadCard)}">Tải ảnh về</button>
-        <button class="btn" style="flex:1;min-width:120px;padding:15px 22px;font-size:15px" data-click="${on(() => go('home', { card: null }))}">Tạo lại</button>
+      <div class="panel editpane">
+        <div class="eyebrow" style="padding-bottom:12px;border-bottom:1px solid rgba(32,29,41,.08)">CHỈNH SỬA THÔNG TIN</div>
+        <div class="muted" style="font-size:12.5px;line-height:1.5">Sửa thông tin rồi bấm <b>Lưu &amp; cập nhật thiệp</b> — thiệp bên cạnh sẽ vẽ lại ngay.</div>
+        ${fields}
+        ${S.cardMsg ? `<div class="${S.cardErr ? 'err' : 'note'}">${esc(S.cardMsg)}</div>` : ''}
+        <button class="btn pri" style="padding:13px 20px;font-size:14.5px" data-click="${on(saveCardEdits)}">Lưu &amp; cập nhật thiệp</button>
+        ${SHOW_JSON_ON_CARD ? `
+        <details class="card" style="padding:14px 18px">
+          <summary style="cursor:pointer;font-size:13px;font-weight:600;color:var(--mut)">Xem payload JSON đã lưu</summary>
+          <pre class="json" style="margin:12px 0 8px;border-radius:8px;padding:12px">${esc(json)}</pre>
+          <button class="btn xs" data-click="${on(() => copy(json))}">${esc(S.copyLabel)}</button>
+        </details>` : ''}
       </div>
-      ${SHOW_JSON_ON_CARD && S.card ? `
-      <details class="card" style="padding:14px 18px">
-        <summary style="cursor:pointer;font-size:13px;font-weight:600;color:var(--mut)">Xem payload JSON đã lưu</summary>
-        <pre class="json" style="margin:12px 0 8px;border-radius:8px;padding:12px">${esc(json)}</pre>
-        <button class="btn xs" data-click="${on(() => copy(json))}">${esc(S.copyLabel)}</button>
-      </details>` : ''}
     </div>
   </div>`;
+}
+
+function saveCardEdits() {
+  const ev = S.events.find((e) => e.id === S.card.eventId);
+  if (!ev) return;
+  for (const i of ev.inputs) {
+    if (i.required && !(S.cardEdit[i.key] || '').trim()) {
+      S.cardMsg = 'Vui lòng nhập: ' + i.label;
+      S.cardErr = true;
+      return render();
+    }
+  }
+  const prev = S.card.payload;
+  const next = buildPayload(ev, { ...S.cardEdit });
+  // same guest record, corrected data — lucky number and QR re-derive from it
+  next.id = prev.id;
+  next.createdAt = prev.createdAt;
+  S.card.payload = next;
+  S.guests = S.guests.map((g) => (g.id === prev.id ? next : g));
+  save('ecard.guests', S.guests);
+  S.cardMsg = next.computed.lucky === prev.computed.lucky
+    ? 'Đã cập nhật thiệp.'
+    : 'Đã cập nhật thiệp — Lucky Number & mã QR đổi theo tên/SĐT mới.';
+  S.cardErr = false;
+  render();
+  if (S.webhook.url) sendWebhook(S.webhook.url, next, 'cập nhật');
 }
 function downloadCard() {
   const ev = S.events.find((e) => e.id === S.card.eventId), c = $('#cardCanvas');
@@ -481,7 +581,7 @@ function dupeModal() {
   const d = S.dupe;
   return `
   <div class="overlay blur">
-    <div class="modal fade" style="max-width:520px">
+    <div class="modal${fade()}" style="max-width:520px">
       <h3 style="margin:0 0 8px;font:700 20px 'Be Vietnam Pro',sans-serif">Tên này đã có trong hệ thống</h3>
       <p class="muted" style="margin:0 0 16px;font-size:13.5px;line-height:1.55">Chọn 1 bản ghi bên dưới để thay thế thông tin, hoặc tạo mới hoàn toàn nếu đây là người/đại lý khác.</p>
       <div class="stack" style="gap:8px;max-height:220px;overflow:auto">
@@ -600,7 +700,7 @@ function adminEvents() {
 
 function adminGuests() {
   const rows = [...S.guests].reverse().map((g) => `
-    <div class="row" data-click="${on(() => { S.viewGuest = g; S.resendMsg = ''; S.copyLabel = 'Copy JSON'; render(); })}">
+    <div class="row" data-click="${on(() => { S.viewGuest = g; S.resendMsg = ''; S.copyLabel = 'Copy JSON'; animate = true; render(); })}">
       <div style="font:600 14px 'Be Vietnam Pro',sans-serif;min-width:180px">${esc((g.computed && g.computed.fullNameDisplay) || g.data.name || '—')}</div>
       <div class="muted" style="font-size:12.5px;flex:1;min-width:160px">${esc(g.eventName)}</div>
       <div style="font-size:12px;color:var(--faint)">${esc(new Date(g.createdAt).toLocaleString('vi-VN'))}</div>
