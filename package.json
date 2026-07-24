@@ -1,0 +1,15 @@
+{
+  "name": "invitation-editor",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Trình tạo thiệp mời sự kiện — trang khách, tra cứu, quản trị",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "test": "node test.js"
+  },
+  "engines": { "node": ">=20" },
+  "dependencies": {
+    "@neondatabase/serverless": ">=0.9.0"
+  }
+}

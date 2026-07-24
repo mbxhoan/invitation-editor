@@ -1,22 +1,27 @@
 'use strict';
-// Static host + data store + outbound API proxy. No dependencies.
-//   node server.js
+// Request handler + local dev server. No dependencies of its own.
+//   node server.js            → http://localhost:3001 (uses data.json)
+//   exported `handler`        → used by api/[...path].js on Vercel
 // Env:
-//   PORT                 default 3000
-//   ADMIN_PASSWORD       default "admin" — set this in production
-//   DELFI_API_PASSWORD   seeds the Future Menus event's Basic Auth password on
-//                        first run. Left blank if unset; an admin can paste it
-//                        into the designer instead. Never hardcoded here.
+//   PORT                       default 3001 (local only)
+//   ADMIN_PASSWORD             default "admin" — set this in production
+//   ADMIN_TOKEN_SECRET         signs admin sessions. REQUIRED on Vercel, else a
+//                              cold start invalidates everyone's login.
+//   DATABASE_URL               Neon connection string. REQUIRED on Vercel
+//   (or POSTGRES_URL)          (no writable filesystem). Absent → local file.
+//   DELFI_API_PASSWORD         seeds the Future Menus Basic Auth password on the
+//                              very first run only. Never hardcoded here.
 const http = require('node:http');
 const fs = require('node:fs');
 const path = require('node:path');
 const crypto = require('node:crypto');
-const S = require('./shared');
+const S = require('./public/shared');
+const store = require('./store');
 
-const PORT = Number(process.env.PORT) || 3000;
+const PORT = Number(process.env.PORT) || 3001;
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin';
-const DATA_FILE = process.env.DATA_FILE || path.join(__dirname, 'data.json');
-const ROOT = __dirname;
+const TOKEN_TTL = 8 * 60 * 60 * 1000;
+const STATIC_ROOT = path.join(__dirname, 'public');
 
 /* ---------------- seed ---------------- */
 const uid = () => crypto.randomBytes(5).toString('hex');
@@ -60,7 +65,7 @@ function seedEvents() {
   const futureMenus = {
     id: uid(),
     name: 'FUTURE MENUS VIETNAM 2026 — UNILEVER FOOD SOLUTIONS',
-    w: 1810, h: 2560, bg: '/public/1.png', theme: null,
+    w: 1810, h: 2560, bg: '/1.png', theme: null,
     inputs: defaultInputs(),
     fields: [
       { id: uid(), type: 'bind', bind: 'fullNameDisplay', prefix: '', x: 909, y: 158, size: 60,
@@ -104,66 +109,41 @@ function seedEvents() {
   ];
 }
 
-/* ---------------- store ---------------- */
-let db;
-try {
-  db = JSON.parse(fs.readFileSync(DATA_FILE, 'utf8'));
-} catch (e) {
-  db = { events: seedEvents(), guests: [], logs: [] };
-}
-db.events ||= []; db.guests ||= []; db.logs ||= [];
-
-function persist() {
-  const tmp = DATA_FILE + '.tmp';
-  fs.writeFileSync(tmp, JSON.stringify(db, null, 2));
-  fs.renameSync(tmp, DATA_FILE); // ponytail: sync write, fine at this scale; queue it if writes ever overlap
-}
-if (!fs.existsSync(DATA_FILE)) persist();
-
-function addLog(eventName, kind, line, ok) {
-  db.logs.unshift({ at: new Date().toISOString(), eventName, kind, line, ok });
-  db.logs = db.logs.slice(0, 50);
-}
+// Seeding + schema creation run once per cold start, not per request.
+let readyP = null;
+const ready = () => (readyP ||= store.init(seedEvents));
 
 /* ---------------- auth ---------------- */
-const tokens = new Map(); // token -> expiry
-const TOKEN_TTL = 8 * 60 * 60 * 1000;
+// Stateless HMAC session: serverless instances share no memory, so a token has
+// to verify from the secret alone rather than from a lookup table.
+const TOKEN_SECRET = process.env.ADMIN_TOKEN_SECRET || crypto.randomBytes(32).toString('hex');
+const sign = (s) => crypto.createHmac('sha256', TOKEN_SECRET).update(String(s)).digest('hex');
 
-// One shared throttle for the two guessable endpoints: admin login and guest lookup.
-const attempts = new Map(); // ip -> { n, until }
-function throttled(ip, limit) {
-  const a = attempts.get(ip);
-  if (a && a.until > Date.now() && a.n >= limit) return true;
-  return false;
+function safeEqual(a, b) {
+  const x = Buffer.from(String(a)), y = Buffer.from(String(b));
+  return x.length === y.length && crypto.timingSafeEqual(x, y);
 }
-function noteFail(ip) {
-  const a = attempts.get(ip) || { n: 0, until: 0 };
-  if (a.until < Date.now()) { a.n = 0; a.until = Date.now() + 15 * 60 * 1000; }
-  a.n++;
-  attempts.set(ip, a);
+function mintToken() {
+  const exp = Date.now() + TOKEN_TTL;
+  return exp + '.' + sign(exp);
 }
 function isAdmin(req) {
   const h = req.headers.authorization || '';
-  const t = h.startsWith('Bearer ') ? h.slice(7) : '';
-  const exp = tokens.get(t);
-  if (!exp) return false;
-  if (exp < Date.now()) { tokens.delete(t); return false; }
-  return true;
+  const raw = h.startsWith('Bearer ') ? h.slice(7) : '';
+  const [exp, sig] = raw.split('.');
+  if (!exp || !sig) return false;
+  if (!(Number(exp) > Date.now())) return false;
+  return safeEqual(sig, sign(exp));
 }
 
 /* ---------------- event views ---------------- */
 // Guests must never receive the integration block — it holds the credentials.
-const publicEvent = (e) => {
-  const { api, ...rest } = e;
-  return rest;
-};
+const publicEvent = (e) => { const { api, ...rest } = e; return rest; };
 // Admins get everything except the password itself; null means "unchanged".
 const adminEvent = (e) => {
   const api = e.api || emptyApi();
-  return {
-    ...e,
-    api: { ...api, auth: { ...api.auth, password: null, hasPassword: !!(api.auth && api.auth.password) } }
-  };
+  const auth = api.auth || {};
+  return { ...e, api: { ...api, auth: { ...auth, password: null, hasPassword: !!auth.password } } };
 };
 
 /* ---------------- outbound integration ---------------- */
@@ -176,7 +156,7 @@ async function forwardToApi(ev, payload, kind) {
     JSON.parse(body);
   } catch (e) {
     const line = `body template không tạo ra JSON hợp lệ: ${e.message}`;
-    addLog(ev.name, kind, line, false);
+    await store.addLog({ at: new Date().toISOString(), eventName: ev.name, kind, line, ok: false });
     return { ok: false, line };
   }
 
@@ -193,14 +173,14 @@ async function forwardToApi(ev, payload, kind) {
     try {
       const j = JSON.parse(text);
       remoteQrcode = j.qrcode || (j.data && j.data.qrcode) || '';
-    } catch (e) { /* non-JSON response is fine, just nothing to capture */ }
-    // never log the Authorization header
+    } catch (e) { /* a non-JSON response is fine, there is just nothing to capture */ }
+    // the Authorization header is deliberately never logged
     const line = `${api.method || 'POST'} ${api.url} → HTTP ${res.status}${text ? ' · ' + text.slice(0, 300) : ''}`;
-    addLog(ev.name, kind, line, res.ok);
+    await store.addLog({ at: new Date().toISOString(), eventName: ev.name, kind, line, ok: res.ok });
     return { ok: res.ok, status: res.status, remoteQrcode, line };
   } catch (e) {
     const line = `${api.url} → LỖI: ${e.message}`;
-    addLog(ev.name, kind, line, false);
+    await store.addLog({ at: new Date().toISOString(), eventName: ev.name, kind, line, ok: false });
     return { ok: false, line };
   }
 }
@@ -212,6 +192,8 @@ const send = (res, code, obj) => {
   res.end(b);
 };
 function readBody(req, limit = 20 * 1024 * 1024) {
+  // Vercel may have parsed the body already
+  if (req.body && typeof req.body === 'object') return Promise.resolve(req.body);
   return new Promise((resolve, reject) => {
     let n = 0; const chunks = [];
     req.on('data', (c) => {
@@ -227,6 +209,9 @@ function readBody(req, limit = 20 * 1024 * 1024) {
     req.on('error', reject);
   });
 }
+const clientIp = (req) =>
+  (req.headers['x-forwarded-for'] || '').split(',')[0].trim() ||
+  (req.socket && req.socket.remoteAddress) || '?';
 
 const MIME = {
   '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8',
@@ -234,33 +219,38 @@ const MIME = {
   '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg',
   '.webp': 'image/webp', '.svg': 'image/svg+xml', '.ico': 'image/x-icon'
 };
-function serveFile(res, rel) {
-  const file = path.join(ROOT, rel);
-  if (!file.startsWith(ROOT + path.sep)) { res.writeHead(403).end('forbidden'); return; }
-  fs.readFile(file, (err, buf) => {
+// Local dev only — on Vercel everything under public/ is served by the CDN.
+function serveStatic(res, rel) {
+  const file = path.join(STATIC_ROOT, rel);
+  const index = path.join(STATIC_ROOT, 'index.html');
+  const target = file.startsWith(STATIC_ROOT + path.sep) && fs.existsSync(file) && fs.statSync(file).isFile()
+    ? file : index;
+  fs.readFile(target, (err, buf) => {
     if (err) { res.writeHead(404).end('not found'); return; }
-    res.writeHead(200, { 'Content-Type': MIME[path.extname(file).toLowerCase()] || 'application/octet-stream' });
+    res.writeHead(200, { 'Content-Type': MIME[path.extname(target).toLowerCase()] || 'application/octet-stream' });
     res.end(buf);
   });
 }
 
 /* ---------------- routes ---------------- */
-const APP_ROUTES = new Set(['/', '/tra-cuu', '/admin']);
-
-const server = http.createServer(async (req, res) => {
+async function handler(req, res) {
   const url = new URL(req.url, 'http://localhost');
   const p = url.pathname;
-  const ip = req.socket.remoteAddress || '?';
+  const ip = clientIp(req);
 
   try {
+    await ready();
+
     /* ----- public API ----- */
     if (p === '/api/bootstrap' && req.method === 'GET') {
-      return send(res, 200, { events: db.events.map(publicEvent) });
+      const events = await store.getEvents();
+      return send(res, 200, { events: events.map(publicEvent) });
     }
 
     if (p === '/api/guests' && req.method === 'POST') {
       const { eventId, data, replaceId, force } = await readBody(req);
-      const ev = db.events.find((e) => e.id === eventId);
+      const events = await store.getEvents();
+      const ev = events.find((e) => e.id === eventId);
       if (!ev) return send(res, 400, { error: 'Sự kiện không tồn tại.' });
       for (const i of ev.inputs) {
         if (i.required && !String((data || {})[i.key] || '').trim()) {
@@ -268,95 +258,98 @@ const server = http.createServer(async (req, res) => {
         }
       }
 
+      const guests = await store.getGuests();
       if (!replaceId && !force) {
-        const matches = db.guests.filter(
+        const matches = guests.filter(
           (g) => g.eventId === ev.id && S.normName(g.data.name) === S.normName(data.name)
         );
         if (matches.length) return send(res, 200, { dupe: matches });
       }
 
-      const prev = replaceId ? db.guests.find((g) => g.id === replaceId) : null;
+      const prev = replaceId ? guests.find((g) => g.id === replaceId) : null;
       const payload = S.buildPayload(ev, data, prev);
       payload.id = prev ? prev.id : uid();
 
       const out = await forwardToApi(ev, payload, prev ? 'cập nhật' : 'tạo mới');
       if (out && out.remoteQrcode) payload.remoteQrcode = out.remoteQrcode;
 
-      db.guests = prev
-        ? db.guests.map((g) => (g.id === prev.id ? payload : g))
-        : [...db.guests, payload];
-      persist();
+      await store.putGuest(payload);
       return send(res, 200, { payload, api: out && { ok: out.ok, line: out.line } });
     }
 
     if (p === '/api/lookup' && req.method === 'POST') {
-      if (throttled(ip, 20)) return send(res, 429, { error: 'Bạn thử quá nhiều lần. Đợi ít phút rồi thử lại.' });
+      if (await store.rateHit('lookup:' + ip, 900) > 20) {
+        return send(res, 429, { error: 'Bạn thử quá nhiều lần. Đợi ít phút rồi thử lại.' });
+      }
       const { eventId, name, phone } = await readBody(req);
       const digits = (x) => String(x || '').replace(/\D/g, '');
-      const hit = db.guests.find((g) =>
+      const guests = await store.getGuests();
+      const hit = guests.find((g) =>
         g.eventId === eventId &&
         S.normName(g.data.name) === S.normName(name) &&
         digits(g.data.phone) === digits(phone) && digits(phone) !== ''
       );
-      if (!hit) { noteFail(ip); return send(res, 404, { error: 'Không tìm thấy thiệp khớp với thông tin bạn nhập.' }); }
+      if (!hit) return send(res, 404, { error: 'Không tìm thấy thiệp khớp với thông tin bạn nhập.' });
       return send(res, 200, { payload: hit });
     }
 
     /* ----- admin ----- */
     if (p === '/api/admin/login' && req.method === 'POST') {
-      if (throttled(ip, 10)) return send(res, 429, { error: 'Sai quá nhiều lần. Đợi 15 phút.' });
+      if (await store.rateHit('login:' + ip, 900) > 10) {
+        return send(res, 429, { error: 'Sai quá nhiều lần. Đợi 15 phút.' });
+      }
       const { password } = await readBody(req);
-      if (String(password || '') !== ADMIN_PASSWORD) { noteFail(ip); return send(res, 401, { error: 'Mật khẩu chưa đúng.' }); }
-      const token = crypto.randomBytes(24).toString('hex');
-      tokens.set(token, Date.now() + TOKEN_TTL);
-      return send(res, 200, { token });
+      if (!safeEqual(String(password || ''), ADMIN_PASSWORD)) {
+        return send(res, 401, { error: 'Mật khẩu chưa đúng.' });
+      }
+      return send(res, 200, { token: mintToken() });
     }
 
     if (p.startsWith('/api/admin/')) {
       if (!isAdmin(req)) return send(res, 401, { error: 'Phiên đăng nhập đã hết hạn.' });
 
       if (p === '/api/admin/state' && req.method === 'GET') {
-        return send(res, 200, { events: db.events.map(adminEvent), guests: db.guests, logs: db.logs });
+        const [events, guests, logs] = await Promise.all([store.getEvents(), store.getGuests(), store.getLogs()]);
+        return send(res, 200, { events: events.map(adminEvent), guests, logs });
       }
 
       if (p === '/api/admin/events' && req.method === 'PUT') {
         const { events } = await readBody(req);
         if (!Array.isArray(events)) return send(res, 400, { error: 'events phải là mảng.' });
-        db.events = events.map((incoming) => {
-          const old = db.events.find((e) => e.id === incoming.id);
+        const old = await store.getEvents();
+        const merged = events.map((incoming) => {
+          const prev = old.find((e) => e.id === incoming.id);
           const api = incoming.api || emptyApi();
           const auth = api.auth || { type: 'none', username: '', password: '' };
           // password === null means the admin did not retype it — keep the stored one
           const password = auth.password == null
-            ? (old && old.api && old.api.auth ? old.api.auth.password || '' : '')
+            ? (prev && prev.api && prev.api.auth ? prev.api.auth.password || '' : '')
             : String(auth.password);
           const { hasPassword, ...authRest } = auth;
           return { ...incoming, api: { ...api, auth: { ...authRest, password } } };
         });
-        persist();
-        return send(res, 200, { events: db.events.map(adminEvent) });
+        await store.setEvents(merged);
+        return send(res, 200, { events: merged.map(adminEvent) });
       }
 
       if (p.startsWith('/api/admin/guests/') && req.method === 'DELETE') {
-        const id = decodeURIComponent(p.slice('/api/admin/guests/'.length));
-        db.guests = db.guests.filter((g) => g.id !== id);
-        persist();
+        await store.deleteGuest(decodeURIComponent(p.slice('/api/admin/guests/'.length)));
         return send(res, 200, { ok: true });
       }
 
       const testMatch = p.match(/^\/api\/admin\/events\/([\w-]+)\/test$/);
       if (testMatch && req.method === 'POST') {
-        const ev = db.events.find((e) => e.id === testMatch[1]);
+        const events = await store.getEvents();
+        const ev = events.find((e) => e.id === testMatch[1]);
         if (!ev) return send(res, 404, { error: 'Sự kiện không tồn tại.' });
         const sample = S.samplePayload(ev);
         sample.id = 'sample';
         const preview = S.renderApiBody(ev.api && ev.api.bodyTemplate, S.apiContext(ev, sample));
         const out = await forwardToApi(ev, sample, 'gửi thử');
-        persist();
         return send(res, 200, {
           preview,
           result: out || { ok: false, line: 'Tích hợp đang tắt hoặc chưa có URL.' },
-          logs: db.logs
+          logs: await store.getLogs()
         });
       }
 
@@ -365,26 +358,27 @@ const server = http.createServer(async (req, res) => {
 
     if (p.startsWith('/api/')) return send(res, 404, { error: 'not found' });
 
-    /* ----- static ----- */
+    /* ----- static (local dev; Vercel serves public/ from its CDN) ----- */
     if (req.method !== 'GET') { res.writeHead(405).end(); return; }
-    if (APP_ROUTES.has(p)) return serveFile(res, 'index.html');
-    if (p === '/shared.js') return serveFile(res, 'shared.js');
-    if (p.startsWith('/public/')) return serveFile(res, decodeURIComponent(p.slice(1)));
-    return serveFile(res, 'index.html'); // unknown paths fall back to the app
+    return serveStatic(res, decodeURIComponent(p.replace(/^\/+/, '')));
   } catch (e) {
     return send(res, 400, { error: e.message || 'Yêu cầu không hợp lệ.' });
   }
-});
+}
 
-if (require.main === module) server.listen(PORT, () => {
-  console.log(`→ http://localhost:${PORT}          trang khách`);
-  console.log(`→ http://localhost:${PORT}/tra-cuu  tra cứu thiệp`);
-  console.log(`→ http://localhost:${PORT}/admin    quản trị`);
-  if (ADMIN_PASSWORD === 'admin') console.log('!  ADMIN_PASSWORD chưa đặt — đang dùng mặc định "admin".');
-  const fm = db.events[0];
-  if (fm && fm.api && fm.api.enabled && !fm.api.auth.password) {
-    console.log('!  Chưa có mật khẩu API Delfi. Đặt DELFI_API_PASSWORD hoặc nhập trong trang quản trị.');
-  }
-});
+const server = http.createServer(handler);
 
-module.exports = { server, db, seedEvents, defaultInputs, emptyApi, forwardToApi };
+if (require.main === module) {
+  server.listen(PORT, () => {
+    console.log(`→ http://localhost:${PORT}          trang khách`);
+    console.log(`→ http://localhost:${PORT}/tra-cuu  tra cứu thiệp`);
+    console.log(`→ http://localhost:${PORT}/admin    quản trị`);
+    console.log(`   lưu trữ: ${store.backend === 'postgres' ? 'Neon Postgres' : 'data.json (file)'}`);
+    if (ADMIN_PASSWORD === 'admin') console.log('!  ADMIN_PASSWORD chưa đặt — đang dùng mặc định "admin".');
+    if (store.backend === 'postgres' && !process.env.ADMIN_TOKEN_SECRET) {
+      console.log('!  ADMIN_TOKEN_SECRET chưa đặt — phiên đăng nhập sẽ mất khi cold start.');
+    }
+  });
+}
+
+module.exports = { handler, server, seedEvents, defaultInputs, emptyApi };
