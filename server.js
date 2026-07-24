@@ -15,6 +15,26 @@ const http = require('node:http');
 const fs = require('node:fs');
 const path = require('node:path');
 const crypto = require('node:crypto');
+
+// Node does not read .env files by itself. Load a tiny dotenv-compatible
+// subset for local development without adding another dependency. Existing
+// shell/Vercel variables always win.
+function loadDotEnv() {
+  const file = path.join(__dirname, '.env');
+  if (!fs.existsSync(file)) return;
+  for (const raw of fs.readFileSync(file, 'utf8').split(/\r?\n/)) {
+    const line = raw.trim();
+    if (!line || line.startsWith('#')) continue;
+    const m = line.match(/^(?:export\s+)?([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*)$/);
+    if (!m || process.env[m[1]] != null) continue;
+    let value = m[2].trim();
+    if ((value.startsWith("'") && value.endsWith("'")) || (value.startsWith('"') && value.endsWith('"'))) {
+      value = value.slice(1, -1);
+    }
+    process.env[m[1]] = value;
+  }
+}
+loadDotEnv();
 const S = require('./public/shared');
 const store = require('./store');
 

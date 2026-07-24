@@ -507,11 +507,11 @@ function cardView() {
   <div class="screen cardscreen">
     <div class="cardlayout${fade()}">
       <div class="cardpane">
-        <div class="cardframe"><canvas id="cardCanvas"></canvas></div>
         <div class="cardbtns">
           <button class="btn gold" style="flex:2;min-width:180px;padding:15px 22px;font-size:15px" data-click="${on(() => downloadCard('#cardCanvas', S.card.payload))}">Tải ảnh về</button>
           <button class="btn" style="flex:1;min-width:120px;padding:15px 22px;font-size:15px" data-click="${on(() => go('home', { card: null }))}">Tạo lại</button>
         </div>
+        <div class="cardframe"><canvas id="cardCanvas"></canvas></div>
       </div>
       <div class="panel editpane">
         <div class="eyebrow" style="padding-bottom:12px;border-bottom:1px solid rgba(32,29,41,.08)">CHỈNH SỬA THÔNG TIN</div>
