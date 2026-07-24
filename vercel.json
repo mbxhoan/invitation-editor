@@ -1,8 +1,5 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "functions": {
-    "api/[...path].js": { "runtime": "nodejs20.x" }
-  },
   "rewrites": [
     { "source": "/tra-cuu", "destination": "/index.html" },
     { "source": "/admin", "destination": "/index.html" }
