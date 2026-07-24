@@ -246,7 +246,9 @@ function serveStatic(res, rel) {
 /* ---------------- routes ---------------- */
 async function handler(req, res) {
   const url = new URL(req.url, 'http://localhost');
-  const p = url.pathname;
+  // Vercel's single entrypoint rewrite carries the original API path in the
+  // query string. Local requests continue to use the normal pathname.
+  const p = url.searchParams.get('__path') || url.pathname;
   const ip = clientIp(req);
 
   try {
