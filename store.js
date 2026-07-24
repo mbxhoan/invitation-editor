@@ -8,7 +8,20 @@
 const fs = require('node:fs');
 const path = require('node:path');
 
-const PG_URL = process.env.DATABASE_URL || process.env.POSTGRES_URL || '';
+// Neon's Vercel integration prefixes its env vars with the storage name
+// (e.g. neee_POSTGRES_URL), so a plain lookup misses them. Accept any var whose
+// name ends in POSTGRES_URL / DATABASE_URL, preferring the pooled SSL one.
+function resolvePgUrl() {
+  const e = process.env;
+  if (e.DATABASE_URL) return e.DATABASE_URL;
+  if (e.POSTGRES_URL) return e.POSTGRES_URL;
+  const keys = Object.keys(e).filter((k) => e[k]);
+  const first = (re) => { const k = keys.find((k) => re.test(k)); return k ? e[k] : ''; };
+  return first(/(^|_)POSTGRES_URL$/) || first(/(^|_)DATABASE_URL$/) ||
+    first(/(^|_)POSTGRES_PRISMA_URL$/) || first(/(^|_)POSTGRES_URL_NON_POOLING$/) ||
+    first(/(^|_)POSTGRES_URL_NO_SSL$/) || first(/(^|_)DATABASE_URL_UNPOOLED$/) || '';
+}
+const PG_URL = resolvePgUrl();
 const DATA_FILE = process.env.DATA_FILE || path.join(__dirname, 'data.json');
 const LOG_CAP = 50;
 
@@ -63,6 +76,9 @@ const store = {
         await pgRun(`INSERT INTO app_state (key, value) VALUES ('events', $1::jsonb) ON CONFLICT (key) DO NOTHING`, [JSON.stringify(seedEvents())]);
       }
       return;
+    }
+    if (process.env.VERCEL) {
+      throw new Error('Không tìm thấy DATABASE_URL/POSTGRES_URL. Trên Vercel bắt buộc dùng Neon Postgres — kết nối database và redeploy.');
     }
     const d = file();
     if (!d.events.length) { d.events = seedEvents(); flush(); }
