@@ -8,6 +8,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Playfair+Display:ital,wght@0,600;0,700;0,800;1,600&family=Montserrat:wght@400;500;600;700;800&family=Cormorant+Garamond:ital,wght@0,600;1,600&display=swap&subset=vietnamese" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <script src="/shared.js"></script>
+<script defer src="/_vercel/insights/script.js"></script>
 <style>
 :root{
   --bg:#f4f2ee; --panel:#fff; --ink:#201d29; --mut:#766f80; --faint:#a39cae;
@@ -294,7 +295,7 @@ const S = {
   lookupEventId: '', lookupName: '', lookupPhone: '', lookupErr: '', lookupResult: null,
   loginVal: '', loginErr: '', authed: false,
   adminTab: 'events', viewGuest: null,
-  editor: null, apiTest: null
+  editor: null, apiTest: null, emailTemplateId: '', sendEmailTemplateId: ''
 };
 const curEvent = () => S.events.find((e) => e.id === S.selEventId);
 
@@ -806,6 +807,9 @@ function adminLogs() {
 /* ---------- guest payload modal ---------- */
 function guestModal() {
   const g = S.viewGuest, json = JSON.stringify(g, null, 2);
+  const ev = S.events.find((e) => e.id === g.eventId);
+  const templates = ev && ev.email && Array.isArray(ev.email.templates) ? ev.email.templates : [];
+  const selectedTemplate = S.sendEmailTemplateId || (templates[0] && templates[0].id) || '';
   const onDelete = on(async () => {
     if (!confirm('Xóa bản ghi khách này?')) return;
     await api('/api/admin/guests/' + encodeURIComponent(g.id), { method: 'DELETE' });
@@ -820,6 +824,20 @@ function guestModal() {
         <button class="btn xs" style="border:none;background:var(--bg)" data-click="${on(() => { S.viewGuest = null; render(); })}">Đóng ✕</button>
       </div>
       <pre class="json" style="margin-bottom:14px">${esc(json)}</pre>
+      <div class="card" style="padding:14px;margin-bottom:14px;display:flex;flex-direction:column;gap:9px">
+        <div class="lbl">EMAIL CHO KHÁCH</div>
+        <div class="muted" style="font-size:12px">${esc(g.data && g.data.email ? g.data.email : 'Khách chưa nhập email')}</div>
+        ${templates.length ? `<select class="inp sm" data-change="${on((e) => { S.sendEmailTemplateId = e.target.value; })}">
+          ${templates.map((t) => `<option value="${esc(t.id)}"${t.id === selectedTemplate ? ' selected' : ''}>${esc(t.name)} (${esc(t.mode)})</option>`).join('')}
+        </select>
+        <button class="btn pri xs" data-click="${on(async () => {
+          try {
+            const r = await api('/api/admin/guests/' + encodeURIComponent(g.id) + '/email', { method: 'POST', body: { templateId: selectedTemplate } });
+            if (r.logs) S.logs = r.logs;
+            alert('Đã gửi email tới ' + r.result.to);
+          } catch (e) { alert('Không gửi được email: ' + e.message); }
+        })}">Gửi email theo template</button>` : '<div class="muted" style="font-size:12px">Sự kiện chưa có template email.</div>'}
+      </div>
       <div style="display:flex;gap:8px;flex-wrap:wrap">
         <button class="btn xs" data-click="${on(() => copy(json))}">${esc(S.copyLabel)}</button>
         <button class="btn xs" data-click="${on(() => downloadJson('guest-' + g.id + '.json', g))}">Tải .json</button>
@@ -1022,6 +1040,7 @@ function editorView() {
         </div>
 
         ${apiPanel(ev)}
+        ${emailPanel(ev)}
         ${selField() ? inspector(ev, selField()) : ''}
       </div>
     </div>
@@ -1129,6 +1148,53 @@ function apiPanel(ev) {
     ${t ? `
       ${t.preview ? `<div class="field" style="gap:6px"><label class="lbl plain">Payload sẽ gửi</label><pre class="json">${esc(t.preview)}</pre></div>` : ''}
       <div class="${t.result && t.result.ok ? 'ok' : 'err'}" style="word-break:break-all">${esc(t.result ? t.result.line : '')}</div>` : ''}
+  </div>`;
+}
+
+/* ---------- per-event email templates ---------- */
+function ensureEmail(ev) {
+  if (!ev.email || typeof ev.email !== 'object') ev.email = {
+    enabled: false, sendOnRegister: false, from: '', replyTo: '',
+    templates: [
+      { id: 'invitation', type: 'invitation', name: 'Thư mời', enabled: true, mode: 'attachments', subject: 'Thư mời tham dự {{eventName}}', html: '<p>Xin chào {{fullNameDisplay}},</p><p>Trân trọng kính mời bạn tham dự <b>{{eventName}}</b>.</p><p>Thiệp mời và mã QR được đính kèm email.</p>' },
+      { id: 'reminder', type: 'reminder', name: 'Reminder', enabled: false, mode: 'inline', subject: 'Nhắc lịch tham dự {{eventName}}', html: '<p>Xin chào {{fullNameDisplay}},</p><p>Đây là email nhắc lịch tham dự <b>{{eventName}}</b>.</p><p>{{cardImage}}</p><p>{{qrImage}}</p>' }
+    ]
+  };
+  if (!Array.isArray(ev.email.templates) || !ev.email.templates.length) ev.email.templates = [{ id: 'invitation', type: 'invitation', name: 'Thư mời', enabled: true, mode: 'attachments', subject: 'Thư mời tham dự {{eventName}}', html: '<p>Xin chào {{fullNameDisplay}},</p>' }];
+  return ev.email;
+}
+
+function emailPanel(ev) {
+  const cfg = ensureEmail(ev);
+  const id = S.emailTemplateId && cfg.templates.some((t) => t.id === S.emailTemplateId) ? S.emailTemplateId : cfg.templates[0].id;
+  const t = cfg.templates.find((x) => x.id === id) || cfg.templates[0];
+  S.emailTemplateId = id;
+  const saveHint = 'Các thay đổi được lưu cùng nút “Lưu template” ở đầu trang.';
+  return `
+  <div class="card" style="padding:18px;display:flex;flex-direction:column;gap:10px">
+    <div class="lbl" style="font-size:13px;letter-spacing:.06em">EMAIL RESEND THEO SỰ KIỆN</div>
+    <div class="muted" style="font-size:12px;line-height:1.5">${saveHint} Cần đặt <code>RESEND_API_KEY</code> và <code>RESEND_FROM</code> trên Vercel.</div>
+    <label class="chk"><input type="checkbox"${cfg.enabled ? ' checked' : ''} data-change="${on(() => { cfg.enabled = !cfg.enabled; render(); })}"> Cho phép gửi email</label>
+    <label class="chk"><input type="checkbox"${cfg.sendOnRegister ? ' checked' : ''} data-change="${on(() => { cfg.sendOnRegister = !cfg.sendOnRegister; render(); })}"> Tự gửi thư mời sau khi đăng ký</label>
+    <div style="display:flex;gap:10px;flex-wrap:wrap">
+      <div class="field" style="gap:6px;flex:1;min-width:150px"><label class="lbl plain">From (tuỳ chọn)</label><input class="inp sm" value="${esc(cfg.from || '')}" placeholder="RESEND_FROM" data-change="${on((e) => { cfg.from = e.target.value; })}"></div>
+      <div class="field" style="gap:6px;flex:1;min-width:150px"><label class="lbl plain">Reply-to (tuỳ chọn)</label><input class="inp sm" value="${esc(cfg.replyTo || '')}" data-change="${on((e) => { cfg.replyTo = e.target.value; })}"></div>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+      <select class="inp sm" style="flex:1;min-width:150px" data-change="${on((e) => { S.emailTemplateId = e.target.value; render(); })}">
+        ${cfg.templates.map((x) => `<option value="${esc(x.id)}"${x.id === t.id ? ' selected' : ''}>${esc(x.name)}</option>`).join('')}
+      </select>
+      <button class="btn xs" data-click="${on(() => { const id = 'email-' + uid().slice(0, 6); cfg.templates.push({ id, type: 'invitation', name: 'Email mới', enabled: false, mode: 'attachments', subject: '{{eventName}}', html: '<p>Xin chào {{fullNameDisplay}},</p>' }); S.emailTemplateId = id; render(); })}">+ Template</button>
+      <button class="btn danger xs"${cfg.templates.length <= 1 ? ' disabled' : ''} data-click="${on(() => { if (cfg.templates.length <= 1) return; cfg.templates = cfg.templates.filter((x) => x.id !== t.id); S.emailTemplateId = cfg.templates[0].id; render(); })}">Xoá</button>
+    </div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap">
+      <div class="field" style="gap:6px;flex:1;min-width:130px"><label class="lbl plain">Tên template</label><input class="inp sm" value="${esc(t.name)}" data-change="${on((e) => { t.name = e.target.value; })}"></div>
+      <div class="field" style="gap:6px;width:130px"><label class="lbl plain">Loại</label><select class="inp sm" data-change="${on((e) => { t.type = e.target.value; })}"><option value="invitation"${t.type === 'invitation' ? ' selected' : ''}>Thư mời</option><option value="reminder"${t.type === 'reminder' ? ' selected' : ''}>Reminder</option></select></div>
+      <div class="field" style="gap:6px;width:130px"><label class="lbl plain">Hình ảnh</label><select class="inp sm" data-change="${on((e) => { t.mode = e.target.value; })}"><option value="attachments"${t.mode === 'attachments' ? ' selected' : ''}>Đính kèm</option><option value="inline"${t.mode === 'inline' ? ' selected' : ''}>Trong email</option></select></div>
+    </div>
+    <label class="chk"><input type="checkbox"${t.enabled ? ' checked' : ''} data-change="${on(() => { t.enabled = !t.enabled; })}"> Template đang hoạt động</label>
+    <div class="field" style="gap:6px"><label class="lbl plain">Subject</label><input class="inp sm" value="${esc(t.subject)}" data-change="${on((e) => { t.subject = e.target.value; })}"></div>
+    <div class="field" style="gap:6px"><label class="lbl plain">HTML email</label><textarea class="inp sm" rows="8" data-change="${on((e) => { t.html = e.target.value; })}">${esc(t.html)}</textarea><div class="muted" style="font-size:11.5px;line-height:1.7">Biến: <code>{{fullNameDisplay}}</code> <code>{{eventName}}</code> <code>{{name}}</code> <code>{{phone}}</code> <code>{{qrImage}}</code> <code>{{cardImage}}</code></div></div>
   </div>`;
 }
 

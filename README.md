@@ -47,6 +47,9 @@ lần chạy đầu.
 | `ADMIN_PASSWORD` | ✅ | Mật khẩu vào `/admin` |
 | `ADMIN_TOKEN_SECRET` | ✅ | Chuỗi ngẫu nhiên dài. **Không set là cold start đá admin ra ngoài.** Tạo bằng `openssl rand -hex 32` |
 | `DELFI_API_PASSWORD` | — | Chỉ dùng lúc seed lần đầu; bỏ qua cũng được, nhập trong `/admin` sau. |
+| `RESEND_API_KEY` | — | Bật gửi email qua Resend; giữ bí mật, chỉ đặt ở server/Vercel. |
+| `RESEND_FROM` | — | Địa chỉ gửi đã verify trên Resend, ví dụ `Thiệp sự kiện <noreply@example.com>`. |
+| `RESEND_REPLY_TO` | — | Địa chỉ nhận phản hồi, tuỳ chọn. |
 
 **3. Deploy**
 
@@ -92,6 +95,17 @@ gửi kèm — Delfi update đúng client thay vì tạo trùng.
 **Vì sao phải có máy chủ:** `User-Agent` là forbidden header, `fetch()` trình duyệt luôn bỏ
 qua; và mật khẩu Basic Auth gửi từ trình duyệt sẽ lộ cho mọi khách mời. Để trống ô mật khẩu
 khi lưu = giữ nguyên mật khẩu cũ.
+
+## Email qua Resend
+
+Đặt `RESEND_API_KEY` và `RESEND_FROM`, sau đó vào `/admin → Sửa thiết kế & API`. Mỗi sự kiện
+có phần **Email Resend theo sự kiện**, cho phép bật gửi tự động sau khi đăng ký, tạo/sửa/xoá
+template `Thư mời` hoặc `Reminder`, và chọn thiệp/QR là file đính kèm hoặc ảnh inline trong
+nội dung email. Admin cũng có thể mở từng khách trong tab **Khách** để gửi lại email theo
+template đã chọn.
+
+Email dùng các biến như `{{fullNameDisplay}}`, `{{eventName}}`, `{{name}}`, `{{phone}}`,
+`{{cardImage}}` và `{{qrImage}}`. API key không bao giờ được trả về trình duyệt.
 
 ## Kiểm thử
 

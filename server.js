@@ -36,6 +36,7 @@ function loadDotEnv() {
 }
 loadDotEnv();
 const S = require('./public/shared');
+const Email = require('./email');
 const store = require('./store');
 
 const PORT = Number(process.env.PORT) || 3001;
@@ -89,6 +90,7 @@ function seedEvents() {
     name: 'FUTURE MENUS VIETNAM 2026 — UNILEVER FOOD SOLUTIONS',
     w: 1810, h: 2560, bg: '/1.png', theme: null,
     inputs: defaultInputs(),
+    email: Email.defaultEmail(),
     fields: [
       { id: uid(), type: 'bind', bind: 'fullNameDisplay', prefix: '', x: 909, y: 158, size: 60,
         font: 'Montserrat', weight: '700', color: '#ffffff', align: 'center', upper: true, ls: 1, maxW: 1450 },
@@ -109,6 +111,7 @@ function seedEvents() {
   const artwork = (name, bg, w, h, x, y, size) => ({
     id: uid(), name, w, h, bg, theme: null,
     inputs: defaultInputs(),
+    email: Email.defaultEmail(),
     api: emptyApi(),
     fields: [{ id: uid(), type: 'qr', x, y, size }]
   });
@@ -149,12 +152,12 @@ function isAdmin(req) {
 
 /* ---------------- event views ---------------- */
 // Guests must never receive the integration block — it holds the credentials.
-const publicEvent = (e) => { const { api, ...rest } = e; return rest; };
+const publicEvent = (e) => { const { api, email, ...rest } = e; return rest; };
 // Admins get everything except the password itself; null means "unchanged".
 const adminEvent = (e) => {
   const api = e.api || emptyApi();
   const auth = api.auth || {};
-  return { ...e, api: { ...api, auth: { ...auth, password: null, hasPassword: !!auth.password } } };
+  return { ...e, email: Email.normalizeEmail(e.email), api: { ...api, auth: { ...auth, password: null, hasPassword: !!auth.password } } };
 };
 
 /* ---------------- outbound integration ---------------- */
@@ -287,7 +290,18 @@ async function handler(req, res) {
       if (out && out.remoteQrcode) payload.remoteQrcode = out.remoteQrcode;
 
       await store.putGuest(payload);
-      return send(res, 200, { payload, api: out && { ok: out.ok, line: out.line } });
+      let emailOut = null;
+      const emailCfg = Email.normalizeEmail(ev.email);
+      const invitation = emailCfg.templates.find((t) => t.type === 'invitation') || emailCfg.templates[0];
+      if (emailCfg.enabled && emailCfg.sendOnRegister && invitation && payload.data.email) {
+        try {
+          emailOut = await Email.sendEventEmail(ev, payload, invitation.id);
+        } catch (e) {
+          emailOut = { ok: false, line: e.message };
+          await store.addLog({ at: new Date().toISOString(), eventName: ev.name, kind: 'gửi email tự động', line: e.message, ok: false });
+        }
+      }
+      return send(res, 200, { payload, api: out && { ok: out.ok, line: out.line }, email: emailOut });
     }
 
     if (p === '/api/lookup' && req.method === 'POST') {
@@ -346,6 +360,25 @@ async function handler(req, res) {
         });
         await store.setEvents(merged);
         return send(res, 200, { events: merged.map(adminEvent) });
+      }
+
+      const emailMatch = p.match(/^\/api\/admin\/guests\/([^/]+)\/email$/);
+      if (emailMatch && req.method === 'POST') {
+        const guests = await store.getGuests();
+        const guest = guests.find((g) => g.id === decodeURIComponent(emailMatch[1]));
+        if (!guest) return send(res, 404, { error: 'Khách không tồn tại.' });
+        const events = await store.getEvents();
+        const ev = events.find((e) => e.id === guest.eventId);
+        if (!ev) return send(res, 404, { error: 'Sự kiện không tồn tại.' });
+        const { templateId } = await readBody(req);
+        try {
+          const result = await Email.sendEventEmail(ev, guest, templateId);
+          await store.addLog({ at: new Date().toISOString(), eventName: ev.name, kind: 'gửi email thủ công', line: `Đã gửi tới ${result.to} · template ${result.templateId}`, ok: true });
+          return send(res, 200, { result, logs: await store.getLogs() });
+        } catch (e) {
+          await store.addLog({ at: new Date().toISOString(), eventName: ev.name, kind: 'gửi email thủ công', line: e.message, ok: false });
+          return send(res, 400, { error: e.message, logs: await store.getLogs() });
+        }
       }
 
       if (p.startsWith('/api/admin/guests/') && req.method === 'DELETE') {
