@@ -19,7 +19,9 @@ const S = require('./public/shared');
 const store = require('./store');
 
 const PORT = Number(process.env.PORT) || 3001;
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin';
+// Keep the convenient local default, but never silently fall back on Vercel:
+// otherwise a typo in the Environment Variable name looks like a bad password.
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || (process.env.VERCEL ? '' : 'admin');
 const TOKEN_TTL = 8 * 60 * 60 * 1000;
 const STATIC_ROOT = path.join(__dirname, 'public');
 
@@ -82,30 +84,19 @@ function seedEvents() {
     }
   };
 
-  const mk = (name, theme, title, date, venue) => ({
-    id: uid(), name, w: 1080, h: 1350, bg: null, theme,
+  // The artwork already contains the event copy. Only draw the QR into the
+  // reserved box; adding another title/date layer would duplicate the design.
+  const artwork = (name, bg, w, h, x, y, size) => ({
+    id: uid(), name, w, h, bg, theme: null,
     inputs: defaultInputs(),
     api: emptyApi(),
-    fields: [
-      { id: uid(), type: 'static', text: 'TRÂN TRỌNG KÍNH MỜI', x: 540, y: 200, size: 28, font: 'Montserrat', weight: '600', color: theme.gold, align: 'center', upper: false, ls: 8, maxW: 0 },
-      { id: uid(), type: 'bind', bind: 'fullNameDisplay', prefix: '', x: 540, y: 285, size: 58, font: 'Playfair Display', weight: '700', color: '#ffffff', align: 'center', upper: true, ls: 1, maxW: 940 },
-      { id: uid(), type: 'bind', bind: 'position', prefix: '', x: 540, y: 345, size: 26, font: 'Montserrat', weight: '600', color: theme.gold, align: 'center', upper: true, ls: 3, maxW: 900 },
-      { id: uid(), type: 'bind', bind: 'company', prefix: '', x: 540, y: 398, size: 29, font: 'Montserrat', weight: '500', color: theme.soft, align: 'center', upper: true, ls: 1, maxW: 960 },
-      { id: uid(), type: 'static', text: 'tới tham dự sự kiện', x: 540, y: 465, size: 26, font: 'Cormorant Garamond', weight: '600', color: theme.soft, align: 'center', upper: false, ls: 2, maxW: 0 },
-      { id: uid(), type: 'static', text: title, x: 540, y: 575, size: 50, font: 'Playfair Display', weight: '800', color: theme.gold, align: 'center', upper: true, ls: 1, maxW: 980 },
-      { id: uid(), type: 'static', text: date, x: 540, y: 655, size: 30, font: 'Montserrat', weight: '700', color: '#ffffff', align: 'center', upper: false, ls: 1, maxW: 0 },
-      { id: uid(), type: 'static', text: venue, x: 540, y: 703, size: 24, font: 'Montserrat', weight: '500', color: theme.soft, align: 'center', upper: false, ls: 1, maxW: 960 },
-      { id: uid(), type: 'static', text: 'Rất hân hạnh được đón tiếp!', x: 540, y: 905, size: 30, font: 'Cormorant Garamond', weight: '600', color: theme.gold, align: 'center', upper: false, ls: 0, maxW: 0 },
-      { id: uid(), type: 'bind', bind: 'lucky', prefix: 'Lucky Number: ', x: 540, y: 960, size: 33, font: 'Montserrat', weight: '700', color: '#ffffff', align: 'center', upper: false, ls: 1, maxW: 0 },
-      { id: uid(), type: 'qr', x: 540, y: 1010, size: 230 },
-      { id: uid(), type: 'static', text: 'MÃ QR ĐỂ CHECK-IN', x: 540, y: 1295, size: 20, font: 'Montserrat', weight: '600', color: theme.soft, align: 'center', upper: false, ls: 4, maxW: 0 }
-    ]
+    fields: [{ id: uid(), type: 'qr', x, y, size }]
   });
 
   return [
     futureMenus,
-    mk('GALA DINNER TRI ÂN ĐỐI TÁC 2026', { c1: '#0e2148', c2: '#050b18', glow: 'rgba(64,120,255,.35)', gold: '#f0d9a0', soft: '#c6d4f2' }, 'ĐÊM TRI ÂN – KẾT NỐI THỊNH VƯỢNG', '12.09.2026  |  18:00 - Thứ Bảy', 'BALLROOM A – REX HOTEL, TP. HỒ CHÍ MINH'),
-    mk('LỄ RA MẮT SẢN PHẨM AURORA', { c1: '#0b3d35', c2: '#02120f', glow: 'rgba(45,212,168,.32)', gold: '#e8dcb8', soft: '#bfe3d6' }, 'AURORA – BỪNG SÁNG KỶ NGUYÊN MỚI', '05.10.2026  |  09:00 - Thứ Hai', 'TRUNG TÂM HỘI NGHỊ QUỐC GIA, HÀ NỘI')
+    artwork('KỶ NIỆM 50 NĂM PINACO – TRỌN VẸN TÂM KHÁT VỌNG', '/2.png', 1080, 1920, 540, 1450, 390),
+    artwork('SỰ KIỆN KICK-OFF DỰ ÁN THE FULTON REGAL', '/3.png', 1440, 2560, 720, 1370, 470)
   ];
 }
 
@@ -295,11 +286,14 @@ async function handler(req, res) {
 
     /* ----- admin ----- */
     if (p === '/api/admin/login' && req.method === 'POST') {
-      if (await store.rateHit('login:' + ip, 900) > 10) {
-        return send(res, 429, { error: 'Sai quá nhiều lần. Đợi 15 phút.' });
+      if (!ADMIN_PASSWORD) {
+        return send(res, 500, { error: 'Thiếu biến môi trường ADMIN_PASSWORD trên Vercel. Hãy kiểm tra đúng tên biến và redeploy.' });
       }
       const { password } = await readBody(req);
       if (!safeEqual(String(password || ''), ADMIN_PASSWORD)) {
+        if (await store.rateHit('login:' + ip, 900) > 10) {
+          return send(res, 429, { error: 'Sai quá nhiều lần. Đợi 15 phút.' });
+        }
         return send(res, 401, { error: 'Mật khẩu chưa đúng.' });
       }
       return send(res, 200, { token: mintToken() });

@@ -74,6 +74,25 @@ const store = {
       const rows = await pgRun(`SELECT value FROM app_state WHERE key = 'events'`);
       if (!rows.length) {
         await pgRun(`INSERT INTO app_state (key, value) VALUES ('events', $1::jsonb) ON CONFLICT (key) DO NOTHING`, [JSON.stringify(seedEvents())]);
+      } else {
+        // Upgrade the original demo rows once. This keeps an already-connected
+        // Neon database from retaining the old gradient-only templates while
+        // leaving any admin-customised event list untouched.
+        const current = rows[0].value || [];
+        const isOldDemo = current.length === 3 &&
+          current[1] && current[1].name === 'GALA DINNER TRI ÂN ĐỐI TÁC 2026' &&
+          current[2] && current[2].name === 'LỄ RA MẮT SẢN PHẨM AURORA';
+        if (isOldDemo) {
+          const upgraded = seedEvents();
+          // Keep event IDs so any guests already created against the demo rows
+          // remain attached to the same event after the artwork upgrade.
+          upgraded.forEach((event, i) => { if (current[i] && current[i].id) event.id = current[i].id; });
+          await pgRun(
+            `INSERT INTO app_state (key, value) VALUES ('events', $1::jsonb)
+             ON CONFLICT (key) DO UPDATE SET value = excluded.value`,
+            [JSON.stringify(upgraded)]
+          );
+        }
       }
       return;
     }
